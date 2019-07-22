@@ -18,6 +18,18 @@ def _get_traceback(exception):
     )
 
 
+def get_environment_variable(variable):
+    """
+    obtains the environment variables and tests collection.
+    :param variable:
+    :return: output = varaible name
+    """
+    output = os.environ.get(variable, None)
+    if output is None:
+        raise ValueError(str(variable)+" config parameter missing.")
+    return output
+
+
 def lambda_handler(event, context):
     # Set up clients
     sqs = boto3.client('sqs', region_name='eu-west-2')
@@ -25,15 +37,15 @@ def lambda_handler(event, context):
     sns = boto3.client('sns', region_name='eu-west-2')
 
     # Sqs
-    queue_url = os.environ['queue_url']
-    function_name = os.environ['function_name']
-    message_group_id = os.environ['message_group_id']
+    queue_url = get_environment_variable('queue_url')
+    function_name = get_environment_variable('function_name')
+    message_group_id = get_environment_variable('message_group_id')
 
     # Sns
-    arn = os.environ['arn']
-    checkpoint = os.environ['checkpoint']
+    arn = get_environment_variable('arn')
+    checkpoint = get_environment_variable('checkpoint')
 
-    period = os.environ['period']
+    period = get_environment_variable('period')
 
     # checkpoint = event['data']['lambdaresult']['checkpoint']
     try:
@@ -85,8 +97,8 @@ def send_sns_message(checkpoint):
     :return:
     """
     sns = boto3.client('sns', region_name='eu-west-2')
-    checkpoint = os.environ['checkpoint']
-    arn = os.environ['arn']
+    checkpoint = get_environment_variable('checkpoint')
+    arn = get_environment_variable('arn')
 
     sns_message = {
         "success": True,

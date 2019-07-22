@@ -3,10 +3,6 @@ import pandas as pd
 import json
 import os
 import boto3
-#time_series_column = timeseriesperiod
-#period_column = period
-#strata_column = strata
-#value_column = q608_total
 
 
 def _get_traceback(exception):
@@ -21,6 +17,17 @@ def _get_traceback(exception):
         )
     )
 
+def get_environment_variable(variable):
+    """
+    obtains the environment variables and tests collection.
+    :param variable:
+    :return: output = varaible name
+    """
+    output = os.environ.get(variable, None)
+    if output is None:
+        raise ValueError(str(variable)+" config parameter missing.")
+    return output
+
 
 def lambda_handler(event, context):
     """
@@ -29,7 +36,7 @@ def lambda_handler(event, context):
     # ENV vars
 
     sqs = boto3.client('sqs', region_name='eu-west-2')
-    queue_url = os.environ['queue_url']
+    queue_url = get_environment_variable('queue_url')
 
     try:
         print(event)
@@ -59,9 +66,9 @@ def calculate_strata(row):
     """
     
     """
-    period_column = os.environ['period_column']
-    strata_column = os.environ['strata_column']
-    value_column = os.environ['value_column']
+    period_column = get_environment_variable('period_column')
+    strata_column = get_environment_variable('strata_column')
+    value_column = get_environment_variable('value_column')
     row[strata_column] = ""
 
     if row[strata_column] == "":
