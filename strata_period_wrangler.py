@@ -31,6 +31,16 @@ def get_environment_variable(variable):
 
 
 def lambda_handler(event, context):
+    """
+    prepares the data for the Strata method.
+    - Read in data from the SQS queue.
+    - Invoke the Strata Method.
+    - Send data from the Strata method to the SQS queue.
+
+    :param event:
+    :param context:
+    :return: string - Json string to send to the SNS topic upon completion
+    """
     # Set up clients
     sqs = boto3.client('sqs', region_name='eu-west-2')
     var_lambda = boto3.client('lambda', region_name='eu-west-2')
