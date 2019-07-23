@@ -55,7 +55,8 @@ def lambda_handler(event, context):
     arn = get_environment_variable('arn')
     checkpoint = get_environment_variable('checkpoint')
 
-    period = get_environment_variable('period')
+    # period = get_environment_variable('period')
+    period = event['RuntimeVariables']['period']
 
     # checkpoint = event['data']['lambdaresult']['checkpoint']
     try:

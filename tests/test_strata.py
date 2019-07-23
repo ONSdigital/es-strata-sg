@@ -73,7 +73,7 @@ class test_strata(unittest.TestCase):
         with mock.patch('json.loads') as json_loads:
             json_loads.return_value = input_data
 
-            strata_period_wrangler.lambda_handler(None, None)
+            strata_period_wrangler.lambda_handler({"RuntimeVariables": {"period": "YYYYMM"}}, None)
 
         payload = mock_lambda.return_value.invoke.call_args[1]['Payload']
 
@@ -88,7 +88,8 @@ class test_strata(unittest.TestCase):
 
     def test_method(self):
         """
-        mocks functionality of the method
+        mocks functionality of the method.
+
         :return: None
 
         """
@@ -105,3 +106,14 @@ class test_strata(unittest.TestCase):
             expected_output_dataframe = pd.DataFrame(expected_method_output)
 
         assert_frame_equal(actual_output_dataframe, expected_output_dataframe)
+
+
+    def test_wrangler_get_traceback(self):
+        """
+        testing the traceback function works correctly.
+
+        :param self:
+        :return:
+        """
+        traceback = strata_period_wrangler._get_traceback(Exception('test exception'))
+        assert traceback == 'Exception: test exception\n'
