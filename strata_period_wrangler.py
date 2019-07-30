@@ -151,4 +151,3 @@ def get_sqs_message(queue_url):
     """
     sqs = boto3.client('sqs', region_name='eu-west-2')
     return sqs.receive_message(QueueUrl=queue_url)
-

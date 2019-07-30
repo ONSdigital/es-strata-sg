@@ -118,7 +118,7 @@ class TestStrata(unittest.TestCase):
         testing the traceback function works correctly.
 
         :param self:
-        :return:
+        :return: None
         """
         traceback = strata_period_wrangler._get_traceback(Exception('test exception'))
         assert traceback == 'Exception: test exception\n'
@@ -136,12 +136,12 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
                 strata_period_wrangler.os.environ,
                 {
-                'arn': 'mock:arn',
-                'checkpoint': 'mock-checkpoint',
-                'method_name': 'mock-name',
-                'sqs_message_group_id': 'mock-group-id',
-                'period': '201809',
-                'queue_url': queue_url
+                    'arn': 'mock:arn',
+                    'checkpoint': 'mock-checkpoint',
+                    'method_name': 'mock-name',
+                    'sqs_message_group_id': 'mock-group-id',
+                    'period': '201809',
+                    'queue_url': queue_url
                 }
         ):
             # Removing the checkpoint to allow for test of missing parameter
@@ -178,8 +178,8 @@ class TestStrata(unittest.TestCase):
         queue_url = sqs.get_queue_by_name(QueueName="test_queue_test.fifo").url
 
         strata_period_wrangler.send_sqs_message(queue_url,
-                                                    "{'Test': 'Message'}",
-                                                    "test_group_id")
+                                                "{'Test': 'Message'}",
+                                                "test_group_id")
         messages = strata_period_wrangler.get_sqs_message(queue_url)
         assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
 
@@ -188,7 +188,7 @@ class TestStrata(unittest.TestCase):
         testing the traceback function works correctly.
 
         :param self:
-        :return:
+        :return: None.
         """
         traceback = strata_period_method._get_traceback(Exception('test exception'))
         assert traceback == 'Exception: test exception\n'
@@ -206,10 +206,10 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
                 strata_period_wrangler.os.environ,
                 {
-                'queue_url': queue_url,
-                'period_column': 'mock-period',
-                'strata_column': 'strata',
-                'value_column': 'Q608_total'
+                    'queue_url': queue_url,
+                    'period_column': 'mock-period',
+                    'strata_column': 'strata',
+                    'value_column': 'Q608_total'
                 }
         ):
             # Removing the strata_column to allow for test of missing parameter

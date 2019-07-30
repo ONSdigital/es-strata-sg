@@ -1,8 +1,10 @@
+"""
+Strata Period Method.
+"""
 import traceback
-import pandas as pd
 import json
 import os
-import boto3
+import pandas as pd
 import marshmallow
 
 
@@ -30,8 +32,10 @@ class EnvironSchema(marshmallow.Schema):
 def lambda_handler(event, context):
     """
 
+    :param event:
+    :param context:
+    :return:
     """
-
     try:
         # Set up Environment variables Schema.
         schema = EnvironSchema()
@@ -41,8 +45,6 @@ def lambda_handler(event, context):
 
         print(event)
         input_data = pd.DataFrame(event)
-        # input_data = pd.read_json(event)
-        # json_data = pd.readjson(input_data)
 
         # Possible _ under calculate
         post_strata = input_data.apply(calculate_strata, axis=1)
@@ -52,7 +54,7 @@ def lambda_handler(event, context):
 
     except Exception as exc:
         print("Unexpected exception {}".format(_get_traceback(exc)))
-        
+
         return {
             "success": False,
             "module": "Strata Method",
