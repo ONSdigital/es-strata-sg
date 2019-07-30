@@ -76,8 +76,6 @@ def lambda_handler(event, context):
 
         send_sqs_message(queue_url, json_response, message_group_id)
 
-        final_output = json.loads(json_response)
-        print(final_output)
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
         send_sns_message(arn, checkpoint)

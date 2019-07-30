@@ -59,6 +59,7 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_wrangler_patcher.stop()
         cls.mock_os_method_patcher.stop()
 
+    @mock_sqs
     @mock.patch('strata_period_wrangler.boto3.client')
     def test_wrangler(self, mock_lambda):
         """
@@ -69,6 +70,10 @@ class TestStrata(unittest.TestCase):
         :return: None.
 
         """
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test-queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
+
         with open('tests/enrichment_out.json') as file:
             input_data = json.load(file)
 
@@ -84,6 +89,8 @@ class TestStrata(unittest.TestCase):
         payload_dataframe = pd.DataFrame(payload_method)
         required_columns = {'strata'}
 
+        strata_period_wrangler.send_sqs_message(queue_url, payload_method, "test")
+
         self.assertTrue(required_columns.issubset(set(payload_dataframe.columns)),
                         'Strata column is not in the DataFrame')
 
@@ -98,7 +105,6 @@ class TestStrata(unittest.TestCase):
             json_content = json.load(file)
 
         actual_output = strata_period_method.lambda_handler(json_content, None)
-        print(actual_output)
         actual_output_dataframe = pd.DataFrame(actual_output)
 
         with open('tests/strata_out.json') as file:
