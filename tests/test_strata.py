@@ -32,7 +32,7 @@ class TestStrata(unittest.TestCase):
                 'arn': 'mock:arn',
                 'checkpoint': 'mock-checkpoint',
                 'method_name': 'mock-name',
-                'message_group_id': 'mock-group-id',
+                'sqs_message_group_id': 'mock-group-id',
                 'period': '201809',
                 'queue_url': 'mock-url'
             }
@@ -139,7 +139,7 @@ class TestStrata(unittest.TestCase):
                 'arn': 'mock:arn',
                 'checkpoint': 'mock-checkpoint',
                 'method_name': 'mock-name',
-                'message_group_id': 'mock-group-id',
+                'sqs_message_group_id': 'mock-group-id',
                 'period': '201809',
                 'queue_url': queue_url
                 }
@@ -182,3 +182,41 @@ class TestStrata(unittest.TestCase):
                                                     "test_group_id")
         messages = strata_period_wrangler.get_sqs_message(queue_url)
         assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
+
+    def test_method_get_traceback(self):
+        """
+        testing the traceback function works correctly.
+
+        :param self:
+        :return:
+        """
+        traceback = strata_period_method._get_traceback(Exception('test exception'))
+        assert traceback == 'Exception: test exception\n'
+
+    @mock_sqs
+    def test_marshmallow_raises_method_exception(self):
+        """
+        Testing the marshmallow raises an exception in method.
+
+        :return: None.
+        """
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+                strata_period_wrangler.os.environ,
+                {
+                'queue_url': queue_url,
+                'period_column': 'mock-period',
+                'strata_column': 'strata',
+                'value_column': 'Q608_total'
+                }
+        ):
+            # Removing the strata_column to allow for test of missing parameter
+            strata_period_method.os.environ.pop("strata_column")
+            response = strata_period_method.lambda_handler(
+                {"RuntimeVariables":
+                     {"period": "201809"}}, None)
+            # self.assertRaises(ValueError)
+            assert (response['error'].__contains__(
+                """ValueError: Error validating environment parameters:"""))

@@ -32,6 +32,7 @@ class EnvironSchema(marshmallow.Schema):
     checkpoint = marshmallow.fields.Str(required=True)
     method_name = marshmallow.fields.Str(required=True)
     sqs_message_group_id = marshmallow.fields.Str(required=True)
+    period = marshmallow.fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -62,7 +63,7 @@ def lambda_handler(event, context):
         checkpoint = config["checkpoint"]
         queue_url = config["queue_url"]
         method_name = config["method_name"]
-        message_group_id = config["message"]
+        sqs_message_group_id = config["sqs_message_group_id"]
 
         # Reads in Data from SQS Queue
         response = get_sqs_message(queue_url)
@@ -74,13 +75,15 @@ def lambda_handler(event, context):
                                           Payload=json.dumps(message_json))
         json_response = returned_data.get('Payload').read().decode("UTF-8")
 
-        send_sqs_message(queue_url, json_response, message_group_id)
+        send_sqs_message(queue_url, json_response, sqs_message_group_id)
 
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
         send_sns_message(arn, checkpoint)
 
     except Exception as exc:
+        print("here beeeee")
+        print(_get_traceback(exc))
         checkpoint = config["checkpoint"]
         queue_url = config["queue_url"]
         purge = sqs.purge_queue(
