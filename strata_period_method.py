@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import os
 import boto3
+import marshmallow
 
 
 def _get_traceback(exception):
@@ -17,32 +18,31 @@ def _get_traceback(exception):
         )
     )
 
-def get_environment_variable(variable):
+
+class EnvironSchema(marshmallow.Schema):
     """
-    obtains the environment variables and tests collection.
-    :param variable:
-    :return: output = varaible name
+    Class to set up the environment variables schema.
     """
-    output = os.environ.get(variable, None)
-    if output is None:
-        raise ValueError(str(variable)+" config parameter missing.")
-    return output
+    strata_column = marshmallow.fields.Str(required=True)
+    value_column = marshmallow.fields.Str(required=True)
 
 
 def lambda_handler(event, context):
     """
 
     """
-    # ENV vars
-
-    sqs = boto3.client('sqs', region_name='eu-west-2')
-    queue_url = get_environment_variable('queue_url')
 
     try:
+        # Set up Environment variables Schema.
+        schema = EnvironSchema()
+        config, errors = schema.load(os.environ)
+        if errors:
+            raise ValueError(f"Error validating environment parameters: {errors}")
+
         print(event)
         input_data = pd.DataFrame(event)
-        #input_data = pd.read_json(event)
-        #json_data = pd.readjson(input_data)
+        # input_data = pd.read_json(event)
+        # json_data = pd.readjson(input_data)
 
         # Possible _ under calculate
         post_strata = input_data.apply(calculate_strata, axis=1)
@@ -64,13 +64,20 @@ def lambda_handler(event, context):
 
 def calculate_strata(row):
     """
-    
-    """
-    period_column = get_environment_variable('period_column')
-    strata_column = get_environment_variable('strata_column')
-    value_column = get_environment_variable('value_column')
-    row[strata_column] = ""
+    Calculates the strata for the reference based on Land or Marine value, question total
+    value and region.
 
+    :param row: row of the dataframe that is being passed into the function.
+    """
+    # period_column = get_environment_variable('period_column')
+    schema = EnvironSchema()
+    config, errors = schema.load(os.environ)
+    if errors:
+        raise ValueError(f"Error validating environment parameters: {errors}")
+    strata_column = config["strata_column"]
+    value_column = config["value_column"]
+
+    row[strata_column] = ""
     if row[strata_column] == "":
         if row["land_or_marine"] == "M":
             row[strata_column] = "M"
@@ -80,9 +87,11 @@ def calculate_strata(row):
             row[strata_column] = "D"
         if row["land_or_marine"] == "L" and row[value_column] > 79999:
             row[strata_column] = "C"
-        if row["land_or_marine"] == "L" and row[value_column] > 129999 and row["region"] > 9:
+        if row["land_or_marine"] == "L" and \
+                row[value_column] > 129999 and row["region"] > 9:
             row[strata_column] = "B2"
-        if row["land_or_marine"] == "L" and row[value_column] > 129999 and row["region"] < 10:
+        if row["land_or_marine"] == "L" and \
+                row[value_column] > 129999 and row["region"] < 10:
             row[strata_column] = "B1"
         if row["land_or_marine"] == "L" and row[value_column] > 200000:
             row[strata_column] = "A"

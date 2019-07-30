@@ -4,18 +4,21 @@ Tests for Strata Module.
 import unittest
 import unittest.mock as mock
 import json
-import sys, os
+import sys
+import os
 import pandas as pd
+import boto3
+from moto import mock_sqs, mock_sns
 from pandas.util.testing import assert_frame_equal
+# docker issue means that this line has to be placed here.
+sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 import strata_period_wrangler
 import strata_period_method
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
 
 
-class test_strata(unittest.TestCase):
+class TestStrata(unittest.TestCase):
     """
     Class testing the strata wrangler and Method.
-
     """
     @classmethod
     def setup_class(cls):
@@ -28,7 +31,7 @@ class test_strata(unittest.TestCase):
             'os.environ', {
                 'arn': 'mock:arn',
                 'checkpoint': 'mock-checkpoint',
-                'function_name': 'mock-name',
+                'method_name': 'mock-name',
                 'message_group_id': 'mock-group-id',
                 'period': '201809',
                 'queue_url': 'mock-url'
@@ -45,7 +48,6 @@ class test_strata(unittest.TestCase):
             }
         )
         cls.mock_os_m = cls.mock_os_method_patcher.start()
-
 
     @classmethod
     def teardown_class(cls):
@@ -73,9 +75,8 @@ class test_strata(unittest.TestCase):
         with mock.patch('json.loads') as json_loads:
             json_loads.return_value = input_data
 
-            strata_period_wrangler.lambda_handler({"RuntimeVariables": {"period": "YYYYMM"}}, None)
-
-        payload = mock_lambda.return_value.invoke.call_args[1]['Payload']
+            strata_period_wrangler.lambda_handler(
+                {"RuntimeVariables": {"period": "YYYYMM"}}, None)
 
         with open('tests/strata_out.json') as file:
             payload_method = json.load(file)
@@ -91,7 +92,6 @@ class test_strata(unittest.TestCase):
         mocks functionality of the method.
 
         :return: None
-
         """
 
         with open('tests/strata_in.json') as file:
@@ -107,7 +107,6 @@ class test_strata(unittest.TestCase):
 
         assert_frame_equal(actual_output_dataframe, expected_output_dataframe)
 
-
     def test_wrangler_get_traceback(self):
         """
         testing the traceback function works correctly.
@@ -117,3 +116,63 @@ class test_strata(unittest.TestCase):
         """
         traceback = strata_period_wrangler._get_traceback(Exception('test exception'))
         assert traceback == 'Exception: test exception\n'
+
+    @mock_sqs
+    def test_marshmallow_raises_wrangler_exception(self):
+        """
+        Testing the marshmallow raises an exception.
+
+        :return: None.
+        """
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(QueueName="test_queue")
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
+        with mock.patch.dict(
+                strata_period_wrangler.os.environ,
+                {
+                'arn': 'mock:arn',
+                'checkpoint': 'mock-checkpoint',
+                'method_name': 'mock-name',
+                'message_group_id': 'mock-group-id',
+                'period': '201809',
+                'queue_url': queue_url
+                }
+        ):
+            # Removing the checkpoint to allow for test of missing parameter
+            strata_period_wrangler.os.environ.pop("method_name")
+            response = strata_period_wrangler.lambda_handler(
+                {"RuntimeVariables":
+                     {"checkpoint": 123, "period": "201809"}}, None)
+            # self.assertRaises(ValueError)
+            assert (response['error'].__contains__(
+                """ValueError: Error validating environment parameters:"""))
+
+    @mock_sns
+    def test_sns_messages(self):
+        """
+        Test sending sns messages to the queue.
+        :return: None.
+        """
+        with mock.patch.dict(strata_period_wrangler.os.environ,
+                             {"arn": "test_arn"}):
+            sns = boto3.client("sns", region_name="eu-west-2")
+            topic = sns.create_topic(Name="test_topic")
+            topic_arn = topic["TopicArn"]
+            strata_period_wrangler.send_sns_message(topic_arn, "test_checkpoint")
+
+    @mock_sqs
+    def test_sqs_send_message(self):
+        """
+        Tests sending of sqs messages to the queue.
+        :return: None.
+        """
+        sqs = boto3.resource('sqs', region_name='eu-west-2')
+        sqs.create_queue(QueueName="test_queue_test.fifo",
+                         Attributes={'FifoQueue': 'true'})
+        queue_url = sqs.get_queue_by_name(QueueName="test_queue_test.fifo").url
+
+        strata_period_wrangler.send_sqs_message(queue_url,
+                                                    "{'Test': 'Message'}",
+                                                    "test_group_id")
+        messages = strata_period_wrangler.get_sqs_message(queue_url)
+        assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
