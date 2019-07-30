@@ -65,7 +65,7 @@ def lambda_handler(event, context):
         message_group_id = config["message"]
 
         # Reads in Data from SQS Queue
-        response = sqs.receive_message(QueueUrl=queue_url)
+        response = get_sqs_message(queue_url)
         message = response['Messages'][0]
         message_json = json.loads(message['Body'])
         receipt_handle = message['ReceiptHandle']
