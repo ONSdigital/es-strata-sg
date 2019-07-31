@@ -126,7 +126,7 @@ class TestStrata(unittest.TestCase):
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
         """
-        Testing the marshmallow raises an exception.
+        Testing the marshmallow in the wrangler raises an exception.
 
         :return: None.
         """

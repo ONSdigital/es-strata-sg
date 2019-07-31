@@ -31,10 +31,13 @@ class EnvironSchema(marshmallow.Schema):
 
 def lambda_handler(event, context):
     """
+    Lambda for the Strata period method.
+
+    - Applies Calculate strata function to row of dataframe.
 
     :param event:
     :param context:
-    :return:
+    :return: strata_out - json of the data with stratas added on.
     """
     try:
         # Set up Environment variables Schema.
@@ -45,9 +48,13 @@ def lambda_handler(event, context):
 
         print(event)
         input_data = pd.DataFrame(event)
+        strata_column = config["strata_column"]
+        value_column = config["value_column"]
 
         # Possible _ under calculate
-        post_strata = input_data.apply(calculate_strata, axis=1)
+        post_strata = input_data.apply(calculate_strata,
+                                       strata_column=strata_column,
+                                       value_column=value_column, axis=1)
 
         json_out = post_strata.to_json(orient='records')
         strata_out = json.loads(json_out)
@@ -64,20 +71,15 @@ def lambda_handler(event, context):
     return strata_out
 
 
-def calculate_strata(row):
+def calculate_strata(row, value_column, strata_column):
     """
     Calculates the strata for the reference based on Land or Marine value, question total
     value and region.
 
-    :param row: row of the dataframe that is being passed into the function.
+    :param row: Row of the dataframe that is being passed into the function.
+    :param value_column: Column of the dataframe containing the Q608 total.
+    :param strata_column: Column of dataframe for the strata_column to be held.
     """
-    # period_column = get_environment_variable('period_column')
-    schema = EnvironSchema()
-    config, errors = schema.load(os.environ)
-    if errors:
-        raise ValueError(f"Error validating environment parameters: {errors}")
-    strata_column = config["strata_column"]
-    value_column = config["value_column"]
 
     row[strata_column] = ""
     if row[strata_column] == "":

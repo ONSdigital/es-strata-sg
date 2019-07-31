@@ -104,10 +104,12 @@ def lambda_handler(event, context):
 
 def send_sns_message(arn, checkpoint):
     """
+    This function is responsible for sending notifications to the SNS Topic.
+    Notifications will be used to relay information to the BPM.
 
-    :param arn:
-    :param checkpoint:
-    :return:
+    :param arn: The Address of the SNS topic - Type: String.
+    :param checkpoint: Location of process - Type: String.
+    :return:None.
     """
     sns = boto3.client('sns', region_name='eu-west-2')
 
