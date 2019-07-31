@@ -74,7 +74,7 @@ class TestStrata(unittest.TestCase):
         sqs.create_queue(QueueName="test-queue")
         queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
 
-        with open('tests/enrichment_out.json') as file:
+        with open('tests/fixtures/enrichment_out.json') as file:
             input_data = json.load(file)
 
         with mock.patch('json.loads') as json_loads:
@@ -83,7 +83,7 @@ class TestStrata(unittest.TestCase):
             strata_period_wrangler.lambda_handler(
                 {"RuntimeVariables": {"period": "YYYYMM"}}, None)
 
-        with open('tests/strata_out.json') as file:
+        with open('tests/fixtures/strata_out.json') as file:
             payload_method = json.load(file)
         # check the output file contains the expected columns and non null values
         payload_dataframe = pd.DataFrame(payload_method)
@@ -101,13 +101,13 @@ class TestStrata(unittest.TestCase):
         :return: None
         """
 
-        with open('tests/strata_in.json') as file:
+        with open('tests/fixtures/strata_in.json') as file:
             json_content = json.load(file)
 
         actual_output = strata_period_method.lambda_handler(json_content, None)
         actual_output_dataframe = pd.DataFrame(actual_output)
 
-        with open('tests/strata_out.json') as file:
+        with open('tests/fixtures/strata_out.json') as file:
             expected_method_output = json.load(file)
             expected_output_dataframe = pd.DataFrame(expected_method_output)
 
