@@ -46,7 +46,6 @@ def lambda_handler(event, context):
         if errors:
             raise ValueError(f"Error validating environment parameters: {errors}")
 
-        print(event)
         input_data = pd.DataFrame(event)
         strata_column = config["strata_column"]
         value_column = config["value_column"]

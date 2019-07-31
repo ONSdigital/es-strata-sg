@@ -78,13 +78,7 @@ def lambda_handler(event, context):
         send_sns_message(arn, checkpoint)
 
     except Exception as exc:
-        print("here beeeee")
-        print(_get_traceback(exc))
         checkpoint = config["checkpoint"]
-        queue_url = config["queue_url"]
-        purge = sqs.purge_queue(
-            QueueUrl=queue_url
-        )
 
         return {
             "success": False,
