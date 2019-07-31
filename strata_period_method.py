@@ -31,7 +31,7 @@ class EnvironSchema(marshmallow.Schema):
 
 def lambda_handler(event, context):
     """
-    Lambda for the Strata period method.
+    Lambda for the Strata method.
 
     - Applies Calculate strata function to row of dataframe.
 

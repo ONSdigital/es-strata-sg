@@ -32,7 +32,6 @@ class EnvironSchema(marshmallow.Schema):
     checkpoint = marshmallow.fields.Str(required=True)
     method_name = marshmallow.fields.Str(required=True)
     sqs_message_group_id = marshmallow.fields.Str(required=True)
-    period = marshmallow.fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -49,9 +48,6 @@ def lambda_handler(event, context):
     # Set up clients
     sqs = boto3.client('sqs', region_name='eu-west-2')
     var_lambda = boto3.client('lambda', region_name='eu-west-2')
-
-    # period = get_environment_variable('period')
-    period = event['RuntimeVariables']['period']
 
     try:
         schema = EnvironSchema()

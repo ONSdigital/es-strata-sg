@@ -33,7 +33,6 @@ class TestStrata(unittest.TestCase):
                 'checkpoint': 'mock-checkpoint',
                 'method_name': 'mock-name',
                 'sqs_message_group_id': 'mock-group-id',
-                'period': '201809',
                 'queue_url': 'mock-url'
             }
         )
@@ -42,7 +41,6 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_method_patcher = mock.patch.dict(
             'os.environ', {
                 'queue_url': 'queue_url',
-                'period_column': 'mock-period',
                 'strata_column': 'strata',
                 'value_column': 'Q608_total'
             }
@@ -140,7 +138,6 @@ class TestStrata(unittest.TestCase):
                     'checkpoint': 'mock-checkpoint',
                     'method_name': 'mock-name',
                     'sqs_message_group_id': 'mock-group-id',
-                    'period': '201809',
                     'queue_url': queue_url
                 }
         ):
@@ -207,7 +204,6 @@ class TestStrata(unittest.TestCase):
                 strata_period_wrangler.os.environ,
                 {
                     'queue_url': queue_url,
-                    'period_column': 'mock-period',
                     'strata_column': 'strata',
                     'value_column': 'Q608_total'
                 }
