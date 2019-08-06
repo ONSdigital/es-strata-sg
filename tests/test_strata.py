@@ -66,7 +66,7 @@ class TestStrata(unittest.TestCase):
         :return: None
         """
         with mock.patch.dict(
-            strata_period_wrangler.os.environ,
+            strata_period_method.os.environ,
             {"strata_column": "strata", "value_column": "Q608_total"},
         ):
             with open("tests/fixtures/strata_in.json") as file:
@@ -128,16 +128,12 @@ class TestStrata(unittest.TestCase):
         )
 
     def test_for_bad_data(self):
-        with mock.patch.dict(
-            strata_period_wrangler.os.environ,
-            {"strata_column": "strata", "value_column": "Q608_total"},
-        ):
-            response = strata_period_method.lambda_handler("", {"aws_request_id": "666"})
-            assert response["error"].__contains__("""Input Error""")
+        response = strata_period_method.lambda_handler("", {"aws_request_id": "666"})
+        assert response["error"].__contains__("""Input Error""")
 
     def test_strata_fail(self):
         with mock.patch.dict(
-            strata_period_wrangler.os.environ,
+            strata_period_method.os.environ,
             {"strata_column": "strata", "value_column": "Q608_total"},
         ):
             with open("tests/fixtures/strata_in.json", "r") as file:
