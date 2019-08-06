@@ -1,6 +1,3 @@
-"""
-Tests for Strata Module.
-"""
 import unittest
 import unittest.mock as mock
 import json
@@ -10,16 +7,19 @@ import pandas as pd
 import boto3
 from moto import mock_sqs, mock_sns, mock_lambda
 from pandas.util.testing import assert_frame_equal
-# docker issue means that this line has to be placed here.
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
-import strata_period_wrangler
-import strata_period_method
 from botocore.response import StreamingBody
+
+# docker issue means that this line has to be placed here.
+sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
+import strata_period_wrangler  # noqa E402
+import strata_period_method  # noqa E402
+
 
 class TestStrata(unittest.TestCase):
     """
     Class testing the strata wrangler and Method.
     """
+
     @classmethod
     def setup_class(cls):
         """
@@ -28,22 +28,24 @@ class TestStrata(unittest.TestCase):
 
         """
         cls.mock_os_wrangler_patcher = mock.patch.dict(
-            'os.environ', {
-                'arn': 'mock:arn',
-                'checkpoint': 'mock-checkpoint',
-                'method_name': 'mock-name',
-                'sqs_message_group_id': 'mock-group-id',
-                'queue_url': 'mock-url'
-            }
+            "os.environ",
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": "mock-url",
+            },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
 
         cls.mock_os_method_patcher = mock.patch.dict(
-            'os.environ', {
-                'queue_url': 'queue_url',
-                'strata_column': 'strata',
-                'value_column': 'Q608_total'
-            }
+            "os.environ",
+            {
+                "queue_url": "queue_url",
+                "strata_column": "strata",
+                "value_column": "Q608_total",
+            },
         )
         cls.mock_os_m = cls.mock_os_method_patcher.start()
 
@@ -57,59 +59,27 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_wrangler_patcher.stop()
         cls.mock_os_method_patcher.stop()
 
-    @mock_sqs
-    @mock.patch('strata_period_wrangler.boto3.client')
-    def test_wrangler(self, mock_lambda):
-        """
-        mocks functionality of the wrangler:
-        - load json file. (uses the calc_imps_test_data.json file)
-        - invoke the method lambda.
-        - retrieve the payload from the method.
-        :return: None.
-
-        """
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test-queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test-queue").url
-
-        with open('tests/fixtures/enrichment_out.json') as file:
-            input_data = json.load(file)
-
-        with mock.patch('json.loads') as json_loads:
-            json_loads.return_value = input_data
-
-            strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"period": "YYYYMM"}}, None)
-
-        with open('tests/fixtures/strata_out.json') as file:
-            payload_method = json.load(file)
-        # check the output file contains the expected columns and non null values
-        payload_dataframe = pd.DataFrame(payload_method)
-        required_columns = {'strata'}
-
-        strata_period_wrangler.send_sqs_message(queue_url, payload_method, "test")
-
-        self.assertTrue(required_columns.issubset(set(payload_dataframe.columns)),
-                        'Strata column is not in the DataFrame')
-
     def test_method(self):
         """
         mocks functionality of the method.
 
         :return: None
         """
+        with mock.patch.dict(
+            strata_period_wrangler.os.environ,
+            {"strata_column": "strata", "value_column": "Q608_total"},
+        ):
+            with open("tests/fixtures/strata_in.json") as file:
+                json_content = json.load(file)
 
-        with open('tests/fixtures/strata_in.json') as file:
-            json_content = json.load(file)
+            actual_output = strata_period_method.lambda_handler(json_content, None)
+            actual_output_dataframe = pd.DataFrame(actual_output)
 
-        actual_output = strata_period_method.lambda_handler(json_content, None)
-        actual_output_dataframe = pd.DataFrame(actual_output)
+            with open("tests/fixtures/strata_out.json") as file:
+                expected_method_output = json.load(file)
+                expected_output_dataframe = pd.DataFrame(expected_method_output)
 
-        with open('tests/fixtures/strata_out.json') as file:
-            expected_method_output = json.load(file)
-            expected_output_dataframe = pd.DataFrame(expected_method_output)
-
-        assert_frame_equal(actual_output_dataframe, expected_output_dataframe)
+            assert_frame_equal(actual_output_dataframe, expected_output_dataframe)
 
     @mock_sns
     def test_sns_messages(self):
@@ -117,8 +87,7 @@ class TestStrata(unittest.TestCase):
         Test sending sns messages to the queue.
         :return: None.
         """
-        with mock.patch.dict(strata_period_wrangler.os.environ,
-                             {"arn": "test_arn"}):
+        with mock.patch.dict(strata_period_wrangler.os.environ, {"arn": "test_arn"}):
             sns = boto3.client("sns", region_name="eu-west-2")
             topic = sns.create_topic(Name="test_topic")
             topic_arn = topic["TopicArn"]
@@ -130,100 +99,74 @@ class TestStrata(unittest.TestCase):
         Tests sending of sqs messages to the queue.
         :return: None.
         """
-        sqs = boto3.resource('sqs', region_name='eu-west-2')
-        sqs.create_queue(QueueName="test_queue_test.fifo",
-                         Attributes={'FifoQueue': 'true'})
+        sqs = boto3.resource("sqs", region_name="eu-west-2")
+        sqs.create_queue(
+            QueueName="test_queue_test.fifo", Attributes={"FifoQueue": "true"}
+        )
         queue_url = sqs.get_queue_by_name(QueueName="test_queue_test.fifo").url
 
-        strata_period_wrangler.send_sqs_message(queue_url,
-                                                "{'Test': 'Message'}",
-                                                "test_group_id")
+        strata_period_wrangler.send_sqs_message(
+            queue_url, "{'Test': 'Message'}", "test_group_id"
+        )
         messages = strata_period_wrangler.get_sqs_message(queue_url)
-        assert messages['Messages'][0]['Body'] == "{'Test': 'Message'}"
+        assert messages["Messages"][0]["Body"] == "{'Test': 'Message'}"
 
-    @mock_sqs
     def test_marshmallow_raises_method_exception(self):
         """
         Testing the marshmallow raises an exception in method.
 
         :return: None.
         """
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
-        with mock.patch.dict(
-                strata_period_wrangler.os.environ,
-                {
-                    'strata_column': 'strata',
-                    'value_column': 'Q608_total'
-                }
-        ):
-            # Removing the strata_column to allow for test of missing parameter
-            strata_period_method.os.environ.pop("strata_column")
-            response = strata_period_method.lambda_handler(
-                {"RuntimeVariables":
-                    {"period": "201809"}}, {"aws_request_id":"666"})
-            # self.assertRaises(ValueError)
-            assert (response['error'].__contains__(
-                """Error validating environment parameters:"""))
-
-
-    #Method exception tests
-
+        # Removing the strata_column to allow for test of missing parameter
+        strata_period_method.os.environ.pop("strata_column")
+        response = strata_period_method.lambda_handler(
+            {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+        )
+        # self.assertRaises(ValueError)
+        assert response["error"].__contains__(
+            """Error validating environment parameters:"""
+        )
 
     def test_for_bad_data(self):
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,
-                {
-                    'strata_column': 'strata',
-                    'value_column': 'Q608_total'
-                }
+            strata_period_wrangler.os.environ,
+            {"strata_column": "strata", "value_column": "Q608_total"},
         ):
-            response = strata_period_method.lambda_handler(
-                '', {"aws_request_id":"666"})
-            assert (response['error'].__contains__(
-                """Input Error"""))
-
+            response = strata_period_method.lambda_handler("", {"aws_request_id": "666"})
+            assert response["error"].__contains__("""Input Error""")
 
     def test_strata_fail(self):
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,
-                {
-                    'strata_column': 'strata',
-                    'value_column': 'Q608_total'
-                }
+            strata_period_wrangler.os.environ,
+            {"strata_column": "strata", "value_column": "Q608_total"},
         ):
-            with open('tests/fixtures/strata_in.json', "r") as file:
+            with open("tests/fixtures/strata_in.json", "r") as file:
                 content = file.read()
                 dataframe_content = pd.DataFrame(json.loads(content))
                 dataframe_content.drop("land_or_marine", inplace=True, axis=1)
 
-                json_content = json.loads(dataframe_content.to_json(orient='records'))
+                json_content = json.loads(dataframe_content.to_json(orient="records"))
 
                 response = strata_period_method.lambda_handler(
-                    json_content, {"aws_request_id":"666"})
-                assert (response['error'].__contains__(
-                    """Key Error in Strata - Method"""))
+                    json_content, {"aws_request_id": "666"}
+                )
+                assert response["error"].__contains__("""Key Error in Strata - Method""")
 
     def test_raise_exception_exception_method(self):
         with mock.patch.dict(
-                strata_period_method.os.environ,
-                {
-                    'strata_column': 'strata',
-                    'value_column': 'Q608_total'
-                }
+            strata_period_method.os.environ,
+            {"strata_column": "strata", "value_column": "Q608_total"},
         ):
             with mock.patch("logging.Logger.info") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_method.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id":"666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
                 )
                 assert "success" in response
                 assert response["success"] is False
-                assert (response['error'].__contains__(
-                    """AARRRRGHH!!"""))
+                assert response["error"].__contains__("""AARRRRGHH!!""")
 
-    #Wrangler Exception tests
+    # Wrangler Exception tests
 
     @mock_sqs
     def test_marshmallow_raises_wrangler_exception(self):
@@ -236,59 +179,58 @@ class TestStrata(unittest.TestCase):
         sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,
-                {
-                    'arn': 'mock:arn',
-                    'checkpoint': 'mock-checkpoint',
-                    'method_name': 'mock-name',
-                    'sqs_message_group_id': 'mock-group-id',
-                    'queue_url': queue_url
-                }
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": queue_url,
+            },
         ):
             # Removing the method_name to allow for test of missing parameter
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables":
-                    {"checkpoint": 123, "period": "201809"}}, {"aws_request_id":"666"})
+                {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}},
+                {"aws_request_id": "666"},
+            )
             # self.assertRaises(ValueError)
-            assert (response['error'].__contains__(
-                """Error validating environment parameters:"""))
+            assert response["error"].__contains__(
+                """Error validating environment parameters:"""
+            )
 
     def test_raise_exception_exception_wrangles(self):
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,
-                {
-                    'strata_column': 'strata',
-                    'value_column': 'Q608_total'
-                }
+            strata_period_wrangler.os.environ,
+            {"strata_column": "strata", "value_column": "Q608_total"},
         ):
             with mock.patch("strata_period_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id":"666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
                 )
                 assert "success" in response
                 assert response["success"] is False
-                assert (response['error'].__contains__(
-                    """AARRRRGHH!!"""))
+                assert response["error"].__contains__("""AARRRRGHH!!""")
 
     @mock_sqs
     def test_wrangles_fail_to_get_from_sqs(self):
-        with mock.patch.dict(strata_period_wrangler.os.environ,
-        {
-            'arn': 'mock:arn',
-            'checkpoint': 'mock-checkpoint',
-            'method_name': 'mock-name',
-            'sqs_message_group_id': 'mock-group-id',
-            'queue_url': "An Invalid Queue"
-        }):
+        with mock.patch.dict(
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": "An Invalid Queue",
+            },
+        ):
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id":"666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
             )
             assert "success" in response
             assert response["success"] is False
-            assert (response['error'].__contains__(
-                """AWS Error"""))
+            assert response["error"].__contains__("""AWS Error""")
 
     @mock_sqs
     def test_wrangles_invoke_fails(self):
@@ -298,57 +240,58 @@ class TestStrata(unittest.TestCase):
         sqs.create_queue(QueueName="test_queue")
         queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,{
-                    'arn': 'mock:arn',
-                    'checkpoint': 'mock-checkpoint',
-                    'method_name': 'mock-name',
-                    'sqs_message_group_id': 'mock-group-id',
-                    'queue_url': queue_url
-                }
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": queue_url,
+            },
         ):
             with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
-                msgbody='{"period": 201809}'
-                mock_squeues.return_value = {"Messages":[{"Body":msgbody, "ReceiptHandle":666}]}
+                msgbody = '{"period": 201809}'
+                mock_squeues.return_value = {
+                    "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                }
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id":"666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
                 )
             assert "success" in response
             assert response["success"] is False
-            print(response['error'])
-            assert (response['error'].__contains__(
-                """AWS Error"""))
+            print(response["error"])
+            assert response["error"].__contains__("""AWS Error""")
 
     @mock_sqs
     @mock_lambda
     def test_wrangles_happy_path(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,{
-                    'arn': 'mock:arn',
-                    'checkpoint': 'mock-checkpoint',
-                    'method_name': 'mock-name',
-                    'sqs_message_group_id': 'mock-group-id',
-                    'queue_url': "sausages"
-                }
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": "sausages",
+            },
         ):
             with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
-                    with open(
-                            "tests/fixtures/strata_out.json", "rb"
-                    ) as file:
+                    with open("tests/fixtures/strata_out.json", "rb") as file:
                         mock_client_object.invoke.return_value = {
                             "Payload": StreamingBody(file, 5894)
                         }
-                        msgbody='{"period": 201809}'
-                        mock_squeues.return_value = {"Messages":[{"Body":msgbody,"ReceiptHandle":666}]}
+                        msgbody = '{"period": 201809}'
+                        mock_squeues.return_value = {
+                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                        }
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666}}, None
+                            {"RuntimeVariables": {"checkpoint": 666}},
+                            {"aws_request_id": "666"},
                         )
-                        print(response)
+
                         assert "success" in response
                         assert response["success"] is True
 
@@ -356,41 +299,37 @@ class TestStrata(unittest.TestCase):
     def test_no_data_in_queue(self):
         sqs = boto3.client("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_url(QueueName="test_queue")['QueueUrl']
-        print(queue_url)
-
+        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,{
-                    'arn': 'mock:arn',
-                    'checkpoint': 'mock-checkpoint',
-                    'method_name': 'mock-name',
-                    'sqs_message_group_id': 'mock-group-id',
-                    'queue_url': queue_url
-                }
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": queue_url,
+            },
         ):
-                response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id":"666"}
-                )
-                assert "success" in response
-                assert response["success"] is False
-                print(response['error'])
-                assert (response['error'].__contains__(
-                    """no data in sqs queue"""))
+            response = strata_period_wrangler.lambda_handler(
+                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+            )
+            assert "success" in response
+            assert response["success"] is False
+            print(response["error"])
+            assert response["error"].__contains__("""no data in sqs queue""")
 
     @mock_sqs
     @mock_lambda
     def test_wrangles_incomplete_json(self):
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
-                strata_period_wrangler.os.environ,{
-                    'arn': 'mock:arn',
-                    'checkpoint': 'mock-checkpoint',
-                    'method_name': 'mock-name',
-                    'sqs_message_group_id': 'mock-group-id',
-                    'queue_url': "sausages"
-                }
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": "sausages",
+            },
         ):
             with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
@@ -400,13 +339,84 @@ class TestStrata(unittest.TestCase):
                         mock_client_object.invoke.return_value = {
                             "Payload": StreamingBody(file, 2)
                         }
-                        msgbody='{"period": 201809}'
-                        mock_squeues.return_value = {"Messages":[{"Body":msgbody,"ReceiptHandle":666}]}
+                        msgbody = '{"period": 201809}'
+                        mock_squeues.return_value = {
+                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                        }
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id":"666"}
+                            {"RuntimeVariables": {"checkpoint": 666}},
+                            {"aws_request_id": "666"},
                         )
 
                         assert "success" in response
                         assert response["success"] is False
-                        assert (response['error'].__contains__(
-                            """Incomplete Lambda response"""))
+                        assert response["error"].__contains__(
+                            """Incomplete Lambda response"""
+                        )
+
+    @mock_sqs
+    @mock_lambda
+    def test_wrangles_bad_data(self):
+        with mock.patch.dict(
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": "sausages",
+            },
+        ):
+            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+                with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
+                    mock_client_object = mock.Mock()
+                    mock_client.return_value = mock_client_object
+                    mock_client_object.invoke.return_value = {
+                        "Payload": StreamingBody("{'boo':'moo':}", 2)
+                    }
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = {
+                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
+                    }
+                    response = strata_period_wrangler.lambda_handler(
+                        {"RuntimeVariables": {"checkpoint": 666}},
+                        {"aws_request_id": "666"},
+                    )
+
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert response["error"].__contains__("""Bad data""")
+
+    @mock_sqs
+    @mock_lambda
+    def test_wrangler_keyerror(self):
+        with mock.patch.dict(
+            strata_period_wrangler.os.environ,
+            {
+                "arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "queue_url": "sausages",
+            },
+        ):
+            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+                with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
+                    mock_client_object = mock.Mock()
+                    mock_client.return_value = mock_client_object
+                    with open("tests/fixtures/strata_out.json", "rb") as file:
+                        mock_client_object.invoke.return_value = {
+                            "Payload": StreamingBody(file, 5894)
+                        }
+                        msgbody = '{"period": 201809}'
+                        mock_squeues.return_value = {
+                            "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
+                        }
+                        response = strata_period_wrangler.lambda_handler(
+                            {"RuntimeVariables": {"checkpoint": 666}},
+                            {"aws_request_id": "666"},
+                        )
+
+                        assert "success" in response
+                        assert response["success"] is False
+                        assert response["error"].__contains__("""Key Error""")

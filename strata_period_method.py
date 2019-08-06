@@ -3,9 +3,7 @@ import os
 import pandas as pd
 import marshmallow
 import logging
-from json.decoder import JSONDecodeError
-from botocore.exceptions import IncompleteReadError
-from botocore.exceptions import ClientError
+
 
 class EnvironSchema(marshmallow.Schema):
     """
@@ -27,10 +25,11 @@ def lambda_handler(event, context):
     :return: strata_out - json of the data with stratas added on.
     """
     current_module = "Strata - Method"
-    error_message = ''
-    log_message = ''
+    error_message = ""
+    log_message = ""
+    logger = logging.getLogger("Strata")
     try:
-        logger = logging.getLogger("Strata")
+
         logger.info("Strata Method Begun")
 
         schema = EnvironSchema()
@@ -39,7 +38,6 @@ def lambda_handler(event, context):
             raise ValueError(f"Error validating environment parameters: {errors}")
 
         logger.info("Vaildated params")
-
 
         input_data = pd.DataFrame(event)
 
@@ -61,21 +59,39 @@ def lambda_handler(event, context):
         logger.info("Succesfully calculated strata")
 
     except ValueError as e:
-        error_message = "Input Error in " + current_module + " |- " + str(e.args) \
-                        + " | Request ID: " + str(context['aws_request_id'])
+        error_message = (
+            "Input Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
-        error_message = "Key Error in " + current_module + " |- " + \
-                        str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
-        error_message = "General Error in " + current_module +  \
-                        " ("+ str(type(e)) +") |- " + str(e.args) + \
-                        " | Request ID: " + str(context['aws_request_id'])
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:
-        if(len(error_message)) > 0:
+        if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
 

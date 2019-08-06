@@ -5,8 +5,8 @@ import boto3
 import marshmallow
 import logging
 from botocore.exceptions import ClientError
-from json.decoder import JSONDecodeError
 from botocore.exceptions import IncompleteReadError
+
 
 class EnvironSchema(marshmallow.Schema):
     """
@@ -19,8 +19,10 @@ class EnvironSchema(marshmallow.Schema):
     method_name = marshmallow.fields.Str(required=True)
     sqs_message_group_id = marshmallow.fields.Str(required=True)
 
+
 class NoDataInQueueError(Exception):
     pass
+
 
 def lambda_handler(event, context):
     """
@@ -34,23 +36,20 @@ def lambda_handler(event, context):
     :return: string - Json string to send to the SNS topic upon completion
     """
     current_module = "Strata - Wrangler"
-    error_message = ''
-    log_message = ''
+    error_message = ""
+    log_message = ""
     logger = logging.getLogger("Strata")
     logger.setLevel(10)
     try:
-
 
         logger.info("Strata Wrangler Begun")
         # Set up clients
         var_lambda = boto3.client("lambda", region_name="eu-west-2")
 
-
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
         if errors:
             raise ValueError(f"Error validating environment parameters: {errors}")
-
 
         logger.info("Vaildated params")
         # Set up environment variables
@@ -62,7 +61,7 @@ def lambda_handler(event, context):
 
         # Reads in Data from SQS Queue
         response = get_sqs_message(queue_url)
-        if 'Messages' not in response:
+        if "Messages" not in response:
             raise NoDataInQueueError("No Messages in queue")
 
         message = response["Messages"][0]
@@ -83,7 +82,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully sent data to sqs")
 
-        sqs = boto3.client('sqs', region_name="eu-west-2")
+        sqs = boto3.client("sqs", region_name="eu-west-2")
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
         logger.info("Successfully deleted input data from sqs")
@@ -92,40 +91,79 @@ def lambda_handler(event, context):
 
         logger.info("Successfully sent data to sns")
     except NoDataInQueueError as e:
-        error_message = "There was no data in sqs queue in:  " + current_module + " |-  | Request ID: " \
-                        + str(context['aws_request_id'])
+        error_message = (
+            "There was no data in sqs queue in:  "
+            + current_module
+            + " |-  | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except JSONDecodeError as e:
-        error_message = "Bad Json encountered in " + current_module + " |- " + \
-                        str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+    except AttributeError as e:
+        error_message = (
+            "Bad data encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
-        error_message = "Parameter validation error" + current_module + " |- " + str(e.args) \
-                        + " | Request ID: " + str(context['aws_request_id'])
+        error_message = (
+            "Parameter validation error"
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
-        error_message = "AWS Error (" + str(e.response['Error']['Code']) \
-                        + ") " + current_module + " |- " + str(e.args) \
-                        + " | Request ID: " + str(context['aws_request_id'])
+        error_message = (
+            "AWS Error ("
+            + str(e.response["Error"]["Code"])
+            + ") "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
-        error_message = "Key Error in " + current_module + " |- " + \
-                        str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+        error_message = (
+            "Key Error in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except IncompleteReadError as e:
-        error_message = "Incomplete Lambda response encountered in " + current_module + " |- " + \
-                        str(e.args) + " | Request ID: " \
-                        + str(context['aws_request_id'])
+        error_message = (
+            "Incomplete Lambda response encountered in "
+            + current_module
+            + " |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
-            error_message = "General Error in " + current_module +  \
-                            " ("+ str(type(e)) +") |- " + str(e.args) + \
-                            " | Request ID: " + str(context['aws_request_id'])
-            log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+        error_message = (
+            "General Error in "
+            + current_module
+            + " ("
+            + str(type(e))
+            + ") |- "
+            + str(e.args)
+            + " | Request ID: "
+            + str(context["aws_request_id"])
+        )
+        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:
-        if(len(error_message)) > 0:
+        if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
         else:
