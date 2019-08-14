@@ -1,0 +1,25 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+ipython = "*"
+ipdb = "*"
+bandit = "*"
+safety ="*"
+sphinx = "*"
+flake8 = "*"
+pep8-naming = "*"
+black = "==19.3b0"
+boto3 = "*"
+awscli = "*"
+moto = "*"
+
+[packages]
+pandas = "*"
+
+[requires]
+python_version = "3.7"
