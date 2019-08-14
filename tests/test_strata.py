@@ -1,17 +1,12 @@
-"""
-Tests for Strata Module.
-"""
 import unittest
 import unittest.mock as mock
 import json
-import sys
-import os
+
 import pandas as pd
 import boto3
 from moto import mock_sqs, mock_sns
 from pandas.util.testing import assert_frame_equal
-# docker issue means that this line has to be placed here.
-sys.path.append(os.path.realpath(os.path.dirname(__file__)+"/.."))
+
 import strata_period_wrangler
 import strata_period_method
 
@@ -144,8 +139,7 @@ class TestStrata(unittest.TestCase):
             # Removing the checkpoint to allow for test of missing parameter
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables":
-                     {"checkpoint": 123, "period": "201809"}}, None)
+                {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}}, None)
             # self.assertRaises(ValueError)
             assert (response['error'].__contains__(
                 """ValueError: Error validating environment parameters:"""))
@@ -211,8 +205,7 @@ class TestStrata(unittest.TestCase):
             # Removing the strata_column to allow for test of missing parameter
             strata_period_method.os.environ.pop("strata_column")
             response = strata_period_method.lambda_handler(
-                {"RuntimeVariables":
-                     {"period": "201809"}}, None)
+                {"RuntimeVariables": {"period": "201809"}}, None)
             # self.assertRaises(ValueError)
             assert (response['error'].__contains__(
                 """ValueError: Error validating environment parameters:"""))
