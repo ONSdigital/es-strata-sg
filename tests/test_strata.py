@@ -1,18 +1,19 @@
 import unittest
 import unittest.mock as mock
 import json
-import sys
-import os
+
 import pandas as pd
 import boto3
 from moto import mock_sqs, mock_sns, mock_lambda
 from pandas.util.testing import assert_frame_equal
+
 from botocore.response import StreamingBody
 
 # docker issue means that this line has to be placed here.
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
 import strata_period_wrangler  # noqa E402
 import strata_period_method  # noqa E402
+
 
 
 class TestStrata(unittest.TestCase):
@@ -184,12 +185,14 @@ class TestStrata(unittest.TestCase):
                 "queue_url": queue_url,
             },
         ):
+
             # Removing the method_name to allow for test of missing parameter
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}},
                 {"aws_request_id": "666"},
             )
+
             # self.assertRaises(ValueError)
             assert response["error"].__contains__(
                 """Error validating environment parameters:"""
