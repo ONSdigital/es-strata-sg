@@ -1,11 +1,11 @@
 import json
+import logging
 import os
 import random
+
 import boto3
 import marshmallow
-import logging
-from botocore.exceptions import ClientError
-from botocore.exceptions import IncompleteReadError
+from botocore.exceptions import ClientError, IncompleteReadError
 
 
 class EnvironSchema(marshmallow.Schema):

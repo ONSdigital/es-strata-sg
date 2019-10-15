@@ -1,20 +1,20 @@
+import json
+import os
+import sys
 import unittest
 import unittest.mock as mock
-import json
-import sys
-import os
 
-import pandas as pd
 import boto3
-from moto import mock_sqs, mock_sns, mock_lambda
+import pandas as pd
+from botocore.response import StreamingBody
+from moto import mock_lambda, mock_sns, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
-from botocore.response import StreamingBody
+import strata_period_method  # noqa E402
+import strata_period_wrangler  # noqa E402
 
 # docker issue means that this line has to be placed here.
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
-import strata_period_wrangler  # noqa E402
-import strata_period_method  # noqa E402
 
 
 class TestStrata(unittest.TestCase):
