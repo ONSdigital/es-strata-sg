@@ -1,6 +1,8 @@
 import unittest
 import unittest.mock as mock
 import json
+import sys
+import os
 
 import pandas as pd
 import boto3
@@ -13,7 +15,6 @@ from botocore.response import StreamingBody
 sys.path.append(os.path.realpath(os.path.dirname(__file__) + "/.."))
 import strata_period_wrangler  # noqa E402
 import strata_period_method  # noqa E402
-
 
 
 class TestStrata(unittest.TestCase):
