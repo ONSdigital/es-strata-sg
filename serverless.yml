@@ -2,27 +2,54 @@ service: imputation
 
 provider:
   name: aws
+  role: arn:aws:iam::014669633018:role/lambda_invoke_lambda
+  vpc:
+    securityGroupIds:
+        - ${file(../json_outputs/security_groups_output.json):SecurityGroups.0.GroupId}
+      subnetIds:
+        - ${file(../json_outputs/subnets_output.json):Subnets.0.VpcId}
+        - ${file(../json_outputs/subnets_output.json):Subnets.1.VpcId}
   runtime: python3.7
   region: eu-west-2
+  package:
+  individually: true
 
 functions:
-  calculate_movement_method:
-    handler: calculate_movement_method.lambda_handler
-    environment:
-      my_env_var: somevalue 
+  strata-period-method:
+    name: es-strata-method
+    handler: strata_method.lambda_handler
+    package:
+      include:
+        - strata_period_method.py
+      exclude:
+        - ./**
     layers:
       - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_layer:10
-  calculate_means_method:
-    handler: calculate_means_method.lambda_handler
+      - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_marshmallow:2
+    tags:
+      app: results
     environment:
-      my_env_var: somevalue 
+      period_column: period
+      strata_column: strata
+      time_series_column: timeseriesperiod
+      value_column: Q608_total
+  
+  strata-period-wrangler:
+    name: es-strata-period-wrangler
+    handler: strata_period_wrangler.lambda_handler
+    package:
+      include:
+        - strata_period_method.py
+      exclude:
+        - ./**
     layers:
       - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_layer:10
-
-package:
-  include:
-    - calculate_means_method.py
-    - calculate_movement_method.py
-  exclude:
-    - "*" 
-    - "**/"
+      - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_marshmallow:2
+    tags:
+      app: results
+    environemnt: 
+      arn: arn:aws:sns:eu-west-2:014669633018:BMIResults
+      checkpoint: 2
+      function_name: strata_period_method
+      message_group_id: strataOut
+      queue_url: https://sqs.eu-west-2.amazonaws.com/014669633018/BMI_Results.fifo
