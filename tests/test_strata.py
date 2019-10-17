@@ -73,7 +73,7 @@ class TestStrata(unittest.TestCase):
         ):
             with open("tests/fixtures/strata_in.json") as file:
                 json_content = json.load(file)
-                
+
             actual_output = strata_period_method.lambda_handler(json_content, None)
             actual_output_dataframe = pd.DataFrame(actual_output)
 
@@ -124,7 +124,7 @@ class TestStrata(unittest.TestCase):
         response = strata_period_method.lambda_handler(
             {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
         )
-        # self.assertRaises(ValueError)
+
         assert response["error"].__contains__(
             """Error validating environment parameters:"""
         )
@@ -194,7 +194,6 @@ class TestStrata(unittest.TestCase):
                 {"aws_request_id": "666"},
             )
 
-            # self.assertRaises(ValueError)
             assert response["error"].__contains__(
                 """Error validating environment parameters:"""
             )
