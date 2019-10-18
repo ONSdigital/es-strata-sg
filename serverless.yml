@@ -1,5 +1,4 @@
-service: imputation
-
+service: es-strata-sg
 provider:
   name: aws
   role: arn:aws:iam::014669633018:role/lambda_invoke_lambda
@@ -50,6 +49,6 @@ functions:
     environemnt: 
       arn: arn:aws:sns:eu-west-2:014669633018:BMIResults
       checkpoint: 2
-      function_name: strata_period_method
+      function_name: es-strata-method
       message_group_id: strataOut
       queue_url: https://sqs.eu-west-2.amazonaws.com/014669633018/BMI_Results.fifo
