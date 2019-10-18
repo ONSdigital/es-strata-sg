@@ -124,7 +124,6 @@ def send_sqs_message(queue_url, message, output_message_id):
     :param output_message_id: The label of the record in the SQS queue - Type: String
     :return: None
     """
-    # sqs = boto3.client('sqs')
     sqs = boto3.client('sqs', region_name='eu-west-2')
 
     # MessageDeduplicationId is set to a random hash to overcome de-duplication,

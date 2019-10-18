@@ -140,7 +140,7 @@ class TestStrata(unittest.TestCase):
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}}, None)
-            # self.assertRaises(ValueError)
+
             assert (response['error'].__contains__(
                 """ValueError: Error validating environment parameters:"""))
 
@@ -206,6 +206,6 @@ class TestStrata(unittest.TestCase):
             strata_period_method.os.environ.pop("strata_column")
             response = strata_period_method.lambda_handler(
                 {"RuntimeVariables": {"period": "201809"}}, None)
-            # self.assertRaises(ValueError)
+
             assert (response['error'].__contains__(
                 """ValueError: Error validating environment parameters:"""))
