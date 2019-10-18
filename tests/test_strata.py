@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 import unittest
 import unittest.mock as mock
 
@@ -121,7 +119,7 @@ class TestStrata(unittest.TestCase):
         response = strata_period_method.lambda_handler(
             {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
         )
-        # self.assertRaises(ValueError)
+
         assert response["error"].__contains__(
             """Error validating environment parameters:"""
         )
@@ -190,7 +188,6 @@ class TestStrata(unittest.TestCase):
                 {"aws_request_id": "666"},
             )
 
-            # self.assertRaises(ValueError)
             assert response["error"].__contains__(
                 """Error validating environment parameters:"""
             )
