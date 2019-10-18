@@ -4,10 +4,10 @@ provider:
   role: arn:aws:iam::014669633018:role/lambda_invoke_lambda
   vpc:
     securityGroupIds:
-        - ${file(../json_outputs/security_groups_output.json):SecurityGroups.0.GroupId}
-      subnetIds:
-        - ${file(../json_outputs/subnets_output.json):Subnets.0.VpcId}
-        - ${file(../json_outputs/subnets_output.json):Subnets.1.VpcId}
+      - ${file(../json_outputs/security_groups_output.json):SecurityGroups.0.GroupId}
+    subnetIds:
+      - ${file(../json_outputs/subnets_output.json):Subnets.0.VpcId}
+      - ${file(../json_outputs/subnets_output.json):Subnets.1.VpcId}
   runtime: python3.7
   region: eu-west-2
   package:
