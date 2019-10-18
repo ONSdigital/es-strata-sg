@@ -16,7 +16,7 @@ provider:
 functions:
   strata-period-method:
     name: es-strata-method
-    handler: strata_method.lambda_handler
+    handler: strata_period_method.lambda_handler
     package:
       include:
         - strata_period_method.py
