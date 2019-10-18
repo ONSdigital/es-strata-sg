@@ -9,4 +9,5 @@ RUN apt-get update -y &&\
     apt-get install nodejs -y &&\
     node -v &&\
     npm -v &&\
-    npm install -g serverless@1.52.2
+    npm install -g serverless
+    
