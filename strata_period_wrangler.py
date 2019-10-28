@@ -1,7 +1,5 @@
-import json
 import logging
 import os
-import random
 
 import boto3
 import marshmallow
@@ -20,6 +18,8 @@ class EnvironSchema(marshmallow.Schema):
     method_name = marshmallow.fields.Str(required=True)
     sqs_message_group_id = marshmallow.fields.Str(required=True)
     incoming_message_group = marshmallow.fields.Str(required=True)
+    file_name = marshmallow.fields.Str(required=True)
+    bucket_name = marshmallow.fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -57,7 +57,13 @@ def lambda_handler(event, context):
         method_name = config["method_name"]
         sqs_message_group_id = config["sqs_message_group_id"]
         incoming_message_group = config["incoming_message_group"]
-        message_json, receipt_handle = funk.get_data(queue_url, bucket_name, "enrichment_out.json",incoming_message_group)
+        file_name = config["file_name"]
+        bucket_name = config["bucket_name"]
+
+        message_json, receipt_handle = funk.get_data(queue_url,
+                                                     bucket_name,
+                                                     "enrichment_out.json",
+                                                     incoming_message_group)
 
         logger.info("Successfully retrieved data from sqs")
 
@@ -69,8 +75,8 @@ def lambda_handler(event, context):
 
         logger.info("Successfully invoked lambda")
 
-        funk.save_data(bucket_name, file_name, json_response, queue_url, sqs_messageid_name)
-        
+        funk.save_data(bucket_name, file_name, json_response, queue_url,
+                       sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")
 
