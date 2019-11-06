@@ -38,15 +38,16 @@ functions:
     handler: strata_period_wrangler.lambda_handler
     package:
       include:
-        - strata_period_method.py
+        - strata_period_wrangler.py
       exclude:
         - ./**
     layers:
+      - arn:aws:lambda:eu-west-2:014669633018:layer:dev-es-commonfunctions:12
       - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_layer:10
       - arn:aws:lambda:eu-west-2:014669633018:layer:es_python_marshmallow:2
     tags:
       app: results
-    environemnt: 
+    environment: 
       arn: arn:aws:sns:eu-west-2:014669633018:BMIResults
       checkpoint: 2
       function_name: es-strata-method
