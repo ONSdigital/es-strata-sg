@@ -5,7 +5,7 @@ import unittest.mock as mock
 import boto3
 import pandas as pd
 from botocore.response import StreamingBody
-from moto import mock_lambda, mock_sns, mock_sqs
+from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
 import strata_period_method
@@ -77,36 +77,6 @@ class TestStrata(unittest.TestCase):
                 expected_output_dataframe = pd.DataFrame(expected_method_output)
 
             assert_frame_equal(actual_output_dataframe, expected_output_dataframe)
-
-    @mock_sns
-    def test_sns_messages(self):
-        """
-        Test sending sns messages to the queue.
-        :return: None.
-        """
-        with mock.patch.dict(strata_period_wrangler.os.environ, {"arn": "test_arn"}):
-            sns = boto3.client("sns", region_name="eu-west-2")
-            topic = sns.create_topic(Name="test_topic")
-            topic_arn = topic["TopicArn"]
-            strata_period_wrangler.send_sns_message(topic_arn, "test_checkpoint")
-
-    @mock_sqs
-    def test_sqs_send_message(self):
-        """
-        Tests sending of sqs messages to the queue.
-        :return: None.
-        """
-        sqs = boto3.resource("sqs", region_name="eu-west-2")
-        sqs.create_queue(
-            QueueName="test_queue_test.fifo", Attributes={"FifoQueue": "true"}
-        )
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue_test.fifo").url
-
-        strata_period_wrangler.send_sqs_message(
-            queue_url, "{'Test': 'Message'}", "test_group_id"
-        )
-        messages = strata_period_wrangler.get_sqs_message(queue_url)
-        assert messages["Messages"][0]["Body"] == "{'Test': 'Message'}"
 
     def test_marshmallow_raises_method_exception(self):
         """
@@ -216,6 +186,9 @@ class TestStrata(unittest.TestCase):
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "queue_url": "An Invalid Queue",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "bucket_name": "Pie",
+                "file_name": "Fillet"
             },
         ):
             response = strata_period_wrangler.lambda_handler(
@@ -240,24 +213,34 @@ class TestStrata(unittest.TestCase):
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "queue_url": queue_url,
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "bucket_name": "Pie",
+                "file_name": "Fillet"
             },
         ):
-            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
                 msgbody = '{"period": 201809}'
-                mock_squeues.return_value = {
-                    "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                }
+                mock_squeues.return_value = msgbody, 666
+
                 response = strata_period_wrangler.lambda_handler(
                     {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
                 )
             assert "success" in response
             assert response["success"] is False
-            print(response["error"])
             assert response["error"].__contains__("""AWS Error""")
 
     @mock_sqs
     @mock_lambda
+    @mock_s3
     def test_wrangles_happy_path(self):
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="Pie")
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
@@ -266,9 +249,13 @@ class TestStrata(unittest.TestCase):
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "queue_url": "sausages",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "bucket_name": "Pie",
+                "file_name": "Fillet"
+
             },
         ):
-            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -277,9 +264,8 @@ class TestStrata(unittest.TestCase):
                             "Payload": StreamingBody(file, 5894)
                         }
                         msgbody = '{"period": 201809}'
-                        mock_squeues.return_value = {
-                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                        }
+                        mock_squeues.return_value = msgbody, 666
+
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
                             {"aws_request_id": "666"},
@@ -287,29 +273,6 @@ class TestStrata(unittest.TestCase):
 
                         assert "success" in response
                         assert response["success"] is True
-
-    @mock_sqs
-    def test_no_data_in_queue(self):
-        sqs = boto3.client("sqs", region_name="eu-west-2")
-        sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_url(QueueName="test_queue")["QueueUrl"]
-        with mock.patch.dict(
-            strata_period_wrangler.os.environ,
-            {
-                "arn": "mock:arn",
-                "checkpoint": "mock-checkpoint",
-                "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "queue_url": queue_url,
-            },
-        ):
-            response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
-            )
-            assert "success" in response
-            assert response["success"] is False
-            print(response["error"])
-            assert response["error"].__contains__("""no data in sqs queue""")
 
     @mock_sqs
     @mock_lambda
@@ -322,9 +285,12 @@ class TestStrata(unittest.TestCase):
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "queue_url": "sausages",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "bucket_name": "Pie",
+                "file_name": "Fillet"
             },
         ):
-            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -333,9 +299,8 @@ class TestStrata(unittest.TestCase):
                             "Payload": StreamingBody(file, 2)
                         }
                         msgbody = '{"period": 201809}'
-                        mock_squeues.return_value = {
-                            "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                        }
+                        mock_squeues.return_value = msgbody,  666
+
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
                             {"aws_request_id": "666"},
@@ -358,9 +323,12 @@ class TestStrata(unittest.TestCase):
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "queue_url": "sausages",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "bucket_name": "Pie",
+                "file_name": "Fillet"
             },
         ):
-            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -368,9 +336,7 @@ class TestStrata(unittest.TestCase):
                         "Payload": StreamingBody("{'boo':'moo':}", 2)
                     }
                     msgbody = '{"period": 201809}'
-                    mock_squeues.return_value = {
-                        "Messages": [{"Body": msgbody, "ReceiptHandle": 666}]
-                    }
+                    mock_squeues.return_value = msgbody, 666
                     response = strata_period_wrangler.lambda_handler(
                         {"RuntimeVariables": {"checkpoint": 666}},
                         {"aws_request_id": "666"},
@@ -382,7 +348,16 @@ class TestStrata(unittest.TestCase):
 
     @mock_sqs
     @mock_lambda
+    @mock_s3
     def test_wrangler_keyerror(self):
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="Pie")
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
@@ -391,9 +366,12 @@ class TestStrata(unittest.TestCase):
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "queue_url": "sausages",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "bucket_name": "Pie",
+                "file_name": "Fillet"
             },
         ):
-            with mock.patch("strata_period_wrangler.get_sqs_message") as mock_squeues:
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -402,9 +380,8 @@ class TestStrata(unittest.TestCase):
                             "Payload": StreamingBody(file, 5894)
                         }
                         msgbody = '{"period": 201809}'
-                        mock_squeues.return_value = {
-                            "Messages": [{"Sausages": msgbody, "ReceiptHandle": 666}]
-                        }
+                        mock_squeues.side_effect = KeyError("AARRRRGHH!!")
+                        mock_squeues.return_value = msgbody, 666
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
                             {"aws_request_id": "666"},
