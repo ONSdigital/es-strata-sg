@@ -59,4 +59,3 @@ functions:
       strata_column: strata
       time_series_column: timeseriesperiod
       value_column: Q608_total
-  
