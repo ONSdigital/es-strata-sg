@@ -142,7 +142,6 @@ class TestStrata(unittest.TestCase):
         """
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
@@ -150,7 +149,6 @@ class TestStrata(unittest.TestCase):
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": queue_url,
             },
         ):
             # Removing the method_name to allow for test of missing parameter
@@ -207,7 +205,6 @@ class TestStrata(unittest.TestCase):
         # to invoke (UnrecognisedClientException)
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
