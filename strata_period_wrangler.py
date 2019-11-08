@@ -82,7 +82,7 @@ def lambda_handler(event, context):
 
         sqs = boto3.client("sqs", region_name="eu-west-2")
 
-        if(receipt_handle):
+        if receipt_handle:
             sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
         logger.info("Successfully deleted input data from sqs")
