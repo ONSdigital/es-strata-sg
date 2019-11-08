@@ -59,7 +59,7 @@ def lambda_handler(event, context):
         sqs_message_group_id = config["sqs_message_group_id"]
         incoming_message_group = config["incoming_message_group"]
         in_file_name = config["in_file_name"]
-        out_file_name = config["file_name"]
+        out_file_name = config["out_file_name"]
         bucket_name = config["bucket_name"]
 
         message_json, receipt_handle = funk.get_data(queue_url,

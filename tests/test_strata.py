@@ -16,7 +16,6 @@ class TestStrata(unittest.TestCase):
     """
     Class testing the strata wrangler and Method.
     """
-
     @classmethod
     def setup_class(cls):
         """
@@ -29,9 +28,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "mock-url",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
@@ -39,7 +42,6 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_method_patcher = mock.patch.dict(
             "os.environ",
             {
-                "queue_url": "queue_url",
                 "strata_column": "strata",
                 "value_column": "Q608_total",
             },
@@ -183,12 +185,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "An Invalid Queue",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             response = strata_period_wrangler.lambda_handler(
@@ -210,12 +213,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": queue_url,
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -246,13 +250,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
-
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -282,12 +286,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -320,12 +325,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -363,12 +369,13 @@ class TestStrata(unittest.TestCase):
             {
                 "arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
