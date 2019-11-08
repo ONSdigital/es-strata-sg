@@ -33,15 +33,15 @@ functions:
     tags:
       app: results
     environment:
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       checkpoint: 2
-      queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
-      method_name: es-strata-method
-      sqs_messageid_name: strata-out
-      incoming_message_group: ingest-out
-      in_file_name: enrichment_out.json
-      out_file_name: strata_out.json
       bucket_name: results-s3-bucket
+      in_file_name: enrichment_out.json
+      incoming_message_group: enrichment-out
+      method_name: es-strata-method
+      out_file_name: strata_out.json
+      queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sqs_message_group_id: strata-out
 
   strata-period-method:
     name: es-strata-method

@@ -2,9 +2,9 @@ import logging
 import os
 
 import boto3
-from marshmallow import Schema, fields
 from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
+from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
@@ -13,14 +13,14 @@ class EnvironSchema(Schema):
     """
 
     checkpoint = fields.Str(required=True)
+    bucket_name = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
+    incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
     queue_url = fields.Str(required=True)
-    results_bucket_name = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
-    sqs_messageid_name = fields.Str(required=True)
-    takeon_bucket_name = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -53,14 +53,14 @@ def lambda_handler(event, context):
         logger.info("Vaildated params")
         # Set up environment variables
         checkpoint = config['checkpoint']
+        bucket_name = config['bucket_name']
         in_file_name = config['in_file_name']
+        incoming_message_group = config['incoming_message_group']
         method_name = config['method_name']
         out_file_name = config['out_file_name']
         queue_url = config['queue_url']
-        results_bucket_name = config['results_bucket_name']
         sns_topic_arn = config['sns_topic_arn']
-        sqs_messageid_name = config['sqs_messageid_name']
-        takeon_bucket_name = config['takeon_bucket_name']
+        sqs_message_group_id = config['sqs_message_group_id']
 
         message_json, receipt_handle = funk.get_data(queue_url,
                                                      bucket_name,
