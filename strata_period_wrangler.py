@@ -18,9 +18,9 @@ class EnvironSchema(Schema):
     incoming_message_group = fields.Str(required=True)
     method_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     sqs_message_group_id = fields.Str(required=True)
+    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -58,11 +58,11 @@ def lambda_handler(event, context):
         incoming_message_group = config['incoming_message_group']
         method_name = config['method_name']
         out_file_name = config['out_file_name']
-        queue_url = config['queue_url']
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
+        sqs_queue_url = config['sqs_queue_url']
 
-        message_json, receipt_handle = funk.get_data(queue_url,
+        message_json, receipt_handle = funk.get_data(sqs_queue_url,
                                                      bucket_name,
                                                      in_file_name,
                                                      incoming_message_group)
@@ -75,7 +75,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully invoked lambda")
 
-        funk.save_data(bucket_name, out_file_name, json_response, queue_url,
+        funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
                        sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")
@@ -83,7 +83,7 @@ def lambda_handler(event, context):
         sqs = boto3.client("sqs", region_name="eu-west-2")
 
         if receipt_handle:
-            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handle)
 
         logger.info("Successfully deleted input data from sqs")
 

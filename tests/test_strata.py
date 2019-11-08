@@ -28,7 +28,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
@@ -183,7 +183,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
@@ -210,7 +210,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
@@ -247,7 +247,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
@@ -283,7 +283,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
@@ -322,7 +322,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
@@ -366,7 +366,7 @@ class TestStrata(unittest.TestCase):
             {
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
-                "queue_url": "sausages",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
