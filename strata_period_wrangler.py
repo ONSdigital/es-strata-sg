@@ -2,25 +2,25 @@ import logging
 import os
 
 import boto3
-import marshmallow
+from marshmallow import Schema, fields
 from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
 
 
-class EnvironSchema(marshmallow.Schema):
+class EnvironSchema(Schema):
     """
     Class to setup the environment variables schema.
     """
 
-    sns_topic_arn = marshmallow.fields.Str(required=True)
-    queue_url = marshmallow.fields.Str(required=True)
-    checkpoint = marshmallow.fields.Str(required=True)
-    method_name = marshmallow.fields.Str(required=True)
-    sqs_message_group_id = marshmallow.fields.Str(required=True)
-    incoming_message_group = marshmallow.fields.Str(required=True)
-    in_file_name = marshmallow.fields.Str(required=True)
-    out_file_name = marshmallow.fields.Str(required=True)
-    bucket_name = marshmallow.fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    method_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
+    results_bucket_name = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    sqs_messageid_name = fields.Str(required=True)
+    takeon_bucket_name = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -52,15 +52,15 @@ def lambda_handler(event, context):
 
         logger.info("Vaildated params")
         # Set up environment variables
-        sns_topic_arn = config["sns_topic_arn"]
-        checkpoint = config["checkpoint"]
-        queue_url = config["queue_url"]
-        method_name = config["method_name"]
-        sqs_message_group_id = config["sqs_message_group_id"]
-        incoming_message_group = config["incoming_message_group"]
-        in_file_name = config["in_file_name"]
-        out_file_name = config["out_file_name"]
-        bucket_name = config["bucket_name"]
+        checkpoint = config['checkpoint']
+        in_file_name = config['in_file_name']
+        method_name = config['method_name']
+        out_file_name = config['out_file_name']
+        queue_url = config['queue_url']
+        results_bucket_name = config['results_bucket_name']
+        sns_topic_arn = config['sns_topic_arn']
+        sqs_messageid_name = config['sqs_messageid_name']
+        takeon_bucket_name = config['takeon_bucket_name']
 
         message_json, receipt_handle = funk.get_data(queue_url,
                                                      bucket_name,
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully deleted input data from sqs")
 
-        funk.send_sns_message(checkpoint, sns_topic_arn, "Strata")
+        funk.send_sns_message(checkpoint, sns_topic_arn, "Strata.")
 
         logger.info("Successfully sent data to sns")
 
@@ -103,7 +103,7 @@ def lambda_handler(event, context):
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
         error_message = (
-            "Parameter validation error"
+            "Parameter validation error in "
             + current_module
             + " |- "
             + str(e.args)
