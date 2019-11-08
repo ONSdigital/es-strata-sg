@@ -78,18 +78,18 @@ def lambda_handler(event, context):
         funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
                        sqs_message_group_id)
 
-        logger.info("Successfully sent data to sqs")
+        logger.info("Successfully sent data to s3")
 
         sqs = boto3.client("sqs", region_name="eu-west-2")
 
         if receipt_handle:
             sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handle)
 
-        logger.info("Successfully deleted input data from sqs")
+        logger.info("Successfully deleted input data from s3")
 
         funk.send_sns_message(checkpoint, sns_topic_arn, "Strata.")
 
-        logger.info("Successfully sent data to sns")
+        logger.info("Successfully sent message to sns")
 
     except AttributeError as e:
         error_message = (
