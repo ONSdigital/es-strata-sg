@@ -26,7 +26,7 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_wrangler_patcher = mock.patch.dict(
             "os.environ",
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",
@@ -146,7 +146,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
@@ -183,7 +183,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",
@@ -211,7 +211,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",
@@ -248,7 +248,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",
@@ -284,7 +284,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",
@@ -323,7 +323,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",
@@ -367,7 +367,7 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "queue_url": "sausages",
                 "method_name": "mock-name",

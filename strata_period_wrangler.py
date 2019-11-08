@@ -12,7 +12,7 @@ class EnvironSchema(marshmallow.Schema):
     Class to setup the environment variables schema.
     """
 
-    arn = marshmallow.fields.Str(required=True)
+    sns_topic_arn = marshmallow.fields.Str(required=True)
     queue_url = marshmallow.fields.Str(required=True)
     checkpoint = marshmallow.fields.Str(required=True)
     method_name = marshmallow.fields.Str(required=True)
@@ -52,7 +52,7 @@ def lambda_handler(event, context):
 
         logger.info("Vaildated params")
         # Set up environment variables
-        arn = config["arn"]
+        sns_topic_arn = config["sns_topic_arn"]
         checkpoint = config["checkpoint"]
         queue_url = config["queue_url"]
         method_name = config["method_name"]
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully deleted input data from sqs")
 
-        funk.send_sns_message(checkpoint, arn, "Strata")
+        funk.send_sns_message(checkpoint, sns_topic_arn, "Strata")
 
         logger.info("Successfully sent data to sns")
 

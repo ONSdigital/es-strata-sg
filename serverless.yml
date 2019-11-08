@@ -33,7 +33,7 @@ functions:
     tags:
       app: results
     environment:
-      arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
+      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       checkpoint: 2
       queue_url: https://sqs.eu-west-2.amazonaws.com/${self:custom.accountId}/BMI_Results.fifo
       method_name: es-strata-method
