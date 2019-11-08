@@ -18,7 +18,8 @@ class EnvironSchema(marshmallow.Schema):
     method_name = marshmallow.fields.Str(required=True)
     sqs_message_group_id = marshmallow.fields.Str(required=True)
     incoming_message_group = marshmallow.fields.Str(required=True)
-    file_name = marshmallow.fields.Str(required=True)
+    in_file_name = marshmallow.fields.Str(required=True)
+    out_file_name = marshmallow.fields.Str(required=True)
     bucket_name = marshmallow.fields.Str(required=True)
 
 
@@ -57,30 +58,30 @@ def lambda_handler(event, context):
         method_name = config["method_name"]
         sqs_message_group_id = config["sqs_message_group_id"]
         incoming_message_group = config["incoming_message_group"]
-        file_name = config["file_name"]
+        in_file_name = config["in_file_name"]
+        out_file_name = config["file_name"]
         bucket_name = config["bucket_name"]
 
         message_json, receipt_handle = funk.get_data(queue_url,
                                                      bucket_name,
-                                                     "enrichment_out.json",
+                                                     in_file_name,
                                                      incoming_message_group)
 
         logger.info("Successfully retrieved data from sqs")
 
-        returned_data = var_lambda.invoke(
-            FunctionName=method_name, Payload=message_json
-        )
+        returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
 
         json_response = returned_data.get("Payload").read().decode("UTF-8")
 
         logger.info("Successfully invoked lambda")
 
-        funk.save_data(bucket_name, file_name, json_response, queue_url,
+        funk.save_data(bucket_name, out_file_name, json_response, queue_url,
                        sqs_message_group_id)
 
         logger.info("Successfully sent data to sqs")
 
         sqs = boto3.client("sqs", region_name="eu-west-2")
+
         if(receipt_handle):
             sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
