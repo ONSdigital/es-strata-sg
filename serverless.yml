@@ -57,6 +57,5 @@ functions:
     tags:
       app: results
     environment:
-      period_column: period
       strata_column: strata
       value_column: Q608_total
