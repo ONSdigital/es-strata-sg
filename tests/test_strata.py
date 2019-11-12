@@ -12,11 +12,17 @@ import strata_period_method
 import strata_period_wrangler
 
 
+class MockContext():
+    aws_request_id = 666
+
+
+context_object = MockContext()
+
+
 class TestStrata(unittest.TestCase):
     """
     Class testing the strata wrangler and Method.
     """
-
     @classmethod
     def setup_class(cls):
         """
@@ -27,11 +33,15 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_wrangler_patcher = mock.patch.dict(
             "os.environ",
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "mock-url",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
@@ -39,7 +49,6 @@ class TestStrata(unittest.TestCase):
         cls.mock_os_method_patcher = mock.patch.dict(
             "os.environ",
             {
-                "queue_url": "queue_url",
                 "strata_column": "strata",
                 "value_column": "Q608_total",
             },
@@ -69,7 +78,8 @@ class TestStrata(unittest.TestCase):
             with open("tests/fixtures/strata_in.json") as file:
                 json_content = json.load(file)
 
-            actual_output = strata_period_method.lambda_handler(json_content, None)
+            actual_output = strata_period_method.\
+                lambda_handler(json_content, context_object)
             actual_output_dataframe = pd.DataFrame(actual_output)
 
             with open("tests/fixtures/strata_out.json") as file:
@@ -87,7 +97,7 @@ class TestStrata(unittest.TestCase):
         # Removing the strata_column to allow for test of missing parameter
         strata_period_method.os.environ.pop("strata_column")
         response = strata_period_method.lambda_handler(
-            {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+            {"RuntimeVariables": {"period": "201809"}}, context_object
         )
 
         assert response["error"].__contains__(
@@ -95,7 +105,7 @@ class TestStrata(unittest.TestCase):
         )
 
     def test_for_bad_data(self):
-        response = strata_period_method.lambda_handler("", {"aws_request_id": "666"})
+        response = strata_period_method.lambda_handler("", context_object)
         assert response["error"].__contains__("""Input Error""")
 
     def test_strata_fail(self):
@@ -111,7 +121,7 @@ class TestStrata(unittest.TestCase):
                 json_content = json.loads(dataframe_content.to_json(orient="records"))
 
                 response = strata_period_method.lambda_handler(
-                    json_content, {"aws_request_id": "666"}
+                    json_content, context_object
                 )
                 assert response["error"].__contains__("""Key Error in Strata - Method""")
 
@@ -123,7 +133,7 @@ class TestStrata(unittest.TestCase):
             with mock.patch("logging.Logger.info") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_method.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -140,22 +150,20 @@ class TestStrata(unittest.TestCase):
         """
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": queue_url,
             },
         ):
             # Removing the method_name to allow for test of missing parameter
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}},
-                {"aws_request_id": "666"},
+                context_object,
             )
 
             assert response["error"].__contains__(
@@ -170,7 +178,7 @@ class TestStrata(unittest.TestCase):
             with mock.patch("strata_period_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -181,18 +189,19 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "An Invalid Queue",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -204,18 +213,18 @@ class TestStrata(unittest.TestCase):
         # to invoke (UnrecognisedClientException)
         sqs = boto3.resource("sqs", region_name="eu-west-2")
         sqs.create_queue(QueueName="test_queue")
-        queue_url = sqs.get_queue_by_name(QueueName="test_queue").url
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": queue_url,
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -223,7 +232,7 @@ class TestStrata(unittest.TestCase):
                 mock_squeues.return_value = msgbody, 666
 
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
                 )
             assert "success" in response
             assert response["success"] is False
@@ -244,15 +253,15 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
-
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -268,7 +277,7 @@ class TestStrata(unittest.TestCase):
 
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
@@ -280,14 +289,15 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -303,7 +313,7 @@ class TestStrata(unittest.TestCase):
 
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
@@ -318,14 +328,15 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -339,7 +350,7 @@ class TestStrata(unittest.TestCase):
                     mock_squeues.return_value = msgbody, 666
                     response = strata_period_wrangler.lambda_handler(
                         {"RuntimeVariables": {"checkpoint": 666}},
-                        {"aws_request_id": "666"},
+                        context_object,
                     )
 
                     assert "success" in response
@@ -361,14 +372,15 @@ class TestStrata(unittest.TestCase):
         with mock.patch.dict(
             strata_period_wrangler.os.environ,
             {
-                "arn": "mock:arn",
+                "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
                 "sqs_message_group_id": "mock-group-id",
-                "queue_url": "sausages",
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "bucket_name": "Pie",
-                "file_name": "Fillet"
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
             },
         ):
             with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
@@ -384,7 +396,7 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.return_value = msgbody, 666
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response

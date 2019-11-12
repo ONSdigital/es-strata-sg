@@ -2,24 +2,25 @@ import logging
 import os
 
 import boto3
-import marshmallow
 from botocore.exceptions import ClientError, IncompleteReadError
 from esawsfunctions import funk
+from marshmallow import Schema, fields
 
 
-class EnvironSchema(marshmallow.Schema):
+class EnvironSchema(Schema):
     """
     Class to setup the environment variables schema.
     """
 
-    arn = marshmallow.fields.Str(required=True)
-    queue_url = marshmallow.fields.Str(required=True)
-    checkpoint = marshmallow.fields.Str(required=True)
-    method_name = marshmallow.fields.Str(required=True)
-    sqs_message_group_id = marshmallow.fields.Str(required=True)
-    incoming_message_group = marshmallow.fields.Str(required=True)
-    file_name = marshmallow.fields.Str(required=True)
-    bucket_name = marshmallow.fields.Str(required=True)
+    checkpoint = fields.Str(required=True)
+    bucket_name = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group = fields.Str(required=True)
+    method_name = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    sqs_message_group_id = fields.Str(required=True)
+    sqs_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -51,44 +52,44 @@ def lambda_handler(event, context):
 
         logger.info("Vaildated params")
         # Set up environment variables
-        arn = config["arn"]
-        checkpoint = config["checkpoint"]
-        queue_url = config["queue_url"]
-        method_name = config["method_name"]
-        sqs_message_group_id = config["sqs_message_group_id"]
-        incoming_message_group = config["incoming_message_group"]
-        file_name = config["file_name"]
-        bucket_name = config["bucket_name"]
+        checkpoint = config['checkpoint']
+        bucket_name = config['bucket_name']
+        in_file_name = config['in_file_name']
+        incoming_message_group = config['incoming_message_group']
+        method_name = config['method_name']
+        out_file_name = config['out_file_name']
+        sns_topic_arn = config['sns_topic_arn']
+        sqs_message_group_id = config['sqs_message_group_id']
+        sqs_queue_url = config['sqs_queue_url']
 
-        message_json, receipt_handle = funk.get_data(queue_url,
+        message_json, receipt_handle = funk.get_data(sqs_queue_url,
                                                      bucket_name,
-                                                     "enrichment_out.json",
+                                                     in_file_name,
                                                      incoming_message_group)
 
         logger.info("Successfully retrieved data from sqs")
 
-        returned_data = var_lambda.invoke(
-            FunctionName=method_name, Payload=message_json
-        )
+        returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
 
         json_response = returned_data.get("Payload").read().decode("UTF-8")
 
         logger.info("Successfully invoked lambda")
 
-        funk.save_data(bucket_name, file_name, json_response, queue_url,
+        funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
                        sqs_message_group_id)
 
-        logger.info("Successfully sent data to sqs")
+        logger.info("Successfully sent data to s3")
 
         sqs = boto3.client("sqs", region_name="eu-west-2")
-        if(receipt_handle):
-            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-        logger.info("Successfully deleted input data from sqs")
+        if receipt_handle:
+            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handle)
 
-        funk.send_sns_message(checkpoint, arn, "Strata")
+        logger.info("Successfully deleted input data from s3")
 
-        logger.info("Successfully sent data to sns")
+        funk.send_sns_message(checkpoint, sns_topic_arn, "Strata.")
+
+        logger.info("Successfully sent message to sns")
 
     except AttributeError as e:
         error_message = (
@@ -97,17 +98,17 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ValueError as e:
         error_message = (
-            "Parameter validation error"
+            "Parameter validation error in "
             + current_module
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except ClientError as e:
@@ -119,7 +120,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except KeyError as e:
@@ -129,7 +130,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except IncompleteReadError as e:
@@ -139,7 +140,7 @@ def lambda_handler(event, context):
             + " |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
@@ -151,7 +152,7 @@ def lambda_handler(event, context):
             + ") |- "
             + str(e.args)
             + " | Request ID: "
-            + str(context["aws_request_id"])
+            + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     finally:
