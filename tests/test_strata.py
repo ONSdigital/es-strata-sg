@@ -12,6 +12,13 @@ import strata_period_method
 import strata_period_wrangler
 
 
+class MockContext():
+    aws_request_id = 666
+
+
+context_object = MockContext()
+
+
 class TestStrata(unittest.TestCase):
     """
     Class testing the strata wrangler and Method.
@@ -71,7 +78,8 @@ class TestStrata(unittest.TestCase):
             with open("tests/fixtures/strata_in.json") as file:
                 json_content = json.load(file)
 
-            actual_output = strata_period_method.lambda_handler(json_content, None)
+            actual_output = strata_period_method.\
+                lambda_handler(json_content, context_object)
             actual_output_dataframe = pd.DataFrame(actual_output)
 
             with open("tests/fixtures/strata_out.json") as file:
@@ -89,7 +97,7 @@ class TestStrata(unittest.TestCase):
         # Removing the strata_column to allow for test of missing parameter
         strata_period_method.os.environ.pop("strata_column")
         response = strata_period_method.lambda_handler(
-            {"RuntimeVariables": {"period": "201809"}}, {"aws_request_id": "666"}
+            {"RuntimeVariables": {"period": "201809"}}, context_object
         )
 
         assert response["error"].__contains__(
@@ -97,7 +105,7 @@ class TestStrata(unittest.TestCase):
         )
 
     def test_for_bad_data(self):
-        response = strata_period_method.lambda_handler("", {"aws_request_id": "666"})
+        response = strata_period_method.lambda_handler("", context_object)
         assert response["error"].__contains__("""Input Error""")
 
     def test_strata_fail(self):
@@ -113,7 +121,7 @@ class TestStrata(unittest.TestCase):
                 json_content = json.loads(dataframe_content.to_json(orient="records"))
 
                 response = strata_period_method.lambda_handler(
-                    json_content, {"aws_request_id": "666"}
+                    json_content, context_object
                 )
                 assert response["error"].__contains__("""Key Error in Strata - Method""")
 
@@ -125,7 +133,7 @@ class TestStrata(unittest.TestCase):
             with mock.patch("logging.Logger.info") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_method.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -155,7 +163,7 @@ class TestStrata(unittest.TestCase):
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
                 {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}},
-                {"aws_request_id": "666"},
+                context_object,
             )
 
             assert response["error"].__contains__(
@@ -170,7 +178,7 @@ class TestStrata(unittest.TestCase):
             with mock.patch("strata_period_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -193,7 +201,7 @@ class TestStrata(unittest.TestCase):
             },
         ):
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                {"RuntimeVariables": {"checkpoint": 666}}, context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -224,7 +232,7 @@ class TestStrata(unittest.TestCase):
                 mock_squeues.return_value = msgbody, 666
 
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, {"aws_request_id": "666"}
+                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
                 )
             assert "success" in response
             assert response["success"] is False
@@ -269,7 +277,7 @@ class TestStrata(unittest.TestCase):
 
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
@@ -305,7 +313,7 @@ class TestStrata(unittest.TestCase):
 
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
@@ -342,7 +350,7 @@ class TestStrata(unittest.TestCase):
                     mock_squeues.return_value = msgbody, 666
                     response = strata_period_wrangler.lambda_handler(
                         {"RuntimeVariables": {"checkpoint": 666}},
-                        {"aws_request_id": "666"},
+                        context_object,
                     )
 
                     assert "success" in response
@@ -388,7 +396,7 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.return_value = msgbody, 666
                         response = strata_period_wrangler.lambda_handler(
                             {"RuntimeVariables": {"checkpoint": 666}},
-                            {"aws_request_id": "666"},
+                            context_object,
                         )
 
                         assert "success" in response
