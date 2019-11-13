@@ -11,7 +11,7 @@ provider:
   runtime: python3.7
   region: eu-west-2
   package:
-  individually: true
+    individually: true
   memorySize: 512
   timeout: 10
   tracing:
