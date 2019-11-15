@@ -107,6 +107,10 @@ def calculate_strata(row, value_column, strata_column):
     :return: row: The calculated row including the strata.
     """
     row[strata_column] = ""
+
+    if row[value_column] is None:
+        return row
+
     if row[strata_column] == "":
         if row["land_or_marine"] == "M":
             row[strata_column] = "M"
