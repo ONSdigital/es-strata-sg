@@ -69,13 +69,12 @@ def lambda_handler(event, context):
 
         logger.info("Successfully retrieved data from sqs")
 
-        returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
-        if str(type(returned_data)) != "<class 'str'>":
-            raise funk.MethodFailure(returned_data['error'])
-        
+        returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)        
         json_response = returned_data.get("Payload").read().decode("UTF-8")
-
         logger.info("Successfully invoked lambda")
+        
+        if str(type(json.loads(returned_data))) != "<class 'str'>":
+            raise funk.MethodFailure(returned_data['error'])
 
         funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
                        sqs_message_group_id)
