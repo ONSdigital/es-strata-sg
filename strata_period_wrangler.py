@@ -73,8 +73,8 @@ def lambda_handler(event, context):
         json_response = returned_data.get("Payload").read().decode("UTF-8")
         logger.info("Successfully invoked lambda")
         
-        if str(type(json.loads(returned_data))) != "<class 'str'>":
-            raise funk.MethodFailure(returned_data['error'])
+        if str(type(json.loads(json_response))) != "<class 'str'>":
+            raise funk.MethodFailure(json_response['error'])
 
         funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
                        sqs_message_group_id)
