@@ -70,7 +70,9 @@ def lambda_handler(event, context):
         logger.info("Successfully retrieved data from sqs")
 
         returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
-
+        if str(type(returned_data)) != "<class 'str'>":
+            raise funk.MethodFailure(returned_data['error'])
+        
         json_response = returned_data.get("Payload").read().decode("UTF-8")
 
         logger.info("Successfully invoked lambda")
@@ -91,6 +93,9 @@ def lambda_handler(event, context):
 
         logger.info("Successfully sent message to sns")
 
+    except funk.MethodFailure as e:
+        error_message = e.error_message
+        log_message = "Error in " + method_name + "."
     except AttributeError as e:
         error_message = (
             "Bad data encountered in "
