@@ -144,6 +144,9 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+    except funk.MethodFailure as e:
+        error_message = e.error_message
+        log_message = "Error in " + method_name + "."
     except Exception as e:
         error_message = (
             "General Error in "
@@ -156,9 +159,6 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except funk.MethodFailure as e:
-        error_message = e.error_message
-        log_message = "Error in " + method_name + "."
     finally:
         if (len(error_message)) > 0:
             logger.error(log_message)
