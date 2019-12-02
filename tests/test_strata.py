@@ -402,3 +402,49 @@ class TestStrata(unittest.TestCase):
                         assert "success" in response
                         assert response["success"] is False
                         assert response["error"].__contains__("""Key Error""")
+
+    @mock_sqs
+    @mock_lambda
+    @mock_s3
+    def test_wrangles_method_error(self):
+        client = boto3.client(
+            "s3",
+            region_name="eu-west-1",
+            aws_access_key_id="fake_access_key",
+            aws_secret_access_key="fake_secret_key",
+        )
+
+        client.create_bucket(Bucket="Pie")
+        with mock.patch.dict(
+            strata_period_wrangler.os.environ,
+            {
+                "sns_topic_arn": "mock:arn",
+                "checkpoint": "mock-checkpoint",
+                "sqs_queue_url": "sausages",
+                "method_name": "mock-name",
+                "sqs_message_group_id": "mock-group-id",
+                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                "in_file_name": "test1.json",
+                "out_file_name": "test2.json",
+                "bucket_name": "Pie"
+            },
+        ):
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+                with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
+                    mock_client_object = mock.Mock()
+                    mock_client.return_value = mock_client_object
+
+                    mock_client_object.invoke.return_value.get.return_value \
+                        .read.return_value.decode.return_value = \
+                        {"error": "This is an error message"}
+                    msgbody = '{"period": 201809}'
+                    mock_squeues.return_value = msgbody, 666
+
+                    response = strata_period_wrangler.lambda_handler(
+                        {"RuntimeVariables": {"checkpoint": 666}},
+                        context_object,
+                    )
+
+                    assert "success" in response
+                    assert response["success"] is False
+                    assert response["error"].__contains__("""This is an error message""")
