@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -69,13 +70,13 @@ def lambda_handler(event, context):
         logger.info("Successfully retrieved data from sqs")
 
         returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
-        json_response = returned_data.get("Payload").read().decode("UTF-8")
+        json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
         logger.info("Successfully invoked lambda")
 
         if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
 
-        funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
+        funk.save_data(bucket_name, out_file_name, json_response['data'], sqs_queue_url,
                        sqs_message_group_id)
 
         logger.info("Successfully sent data to s3")

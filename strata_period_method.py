@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -49,11 +48,10 @@ def lambda_handler(event, context):
             value_column=value_column,
             axis=1,
         )
-
+        logger.info("Successfully ran calculation")
         json_out = post_strata.to_json(orient="records")
 
         final_output = {"data": json_out}
-        logger.info("Successfully calculated strata")
 
     except ValueError as e:
         error_message = (

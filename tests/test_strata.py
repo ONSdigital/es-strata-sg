@@ -266,17 +266,16 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues, \
-                    mock.patch("strata_period_wrangler.funk.save_data") as mock_save:
+            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
                     with open("tests/fixtures/strata_out.json", "r") as file:
                         mock_client_object.invoke.return_value\
                             .get.return_value.read\
-                            .return_value.decode.return_value = {
-                            "data": file.read(), "success": True
-                        }
+                            .return_value.decode.return_value = json.dumps({
+                             "data": file.read(), "success": True
+                            })
                         msgbody = '{"period": 201809}'
                         mock_squeues.return_value = msgbody, 666
 
@@ -441,7 +440,8 @@ class TestStrata(unittest.TestCase):
 
                     mock_client_object.invoke.return_value.get.return_value \
                         .read.return_value.decode.return_value = \
-                        {"error": "This is an error message", "success": False}
+                        json.dumps({"error": "This is an error message",
+                                    "success": False})
                     msgbody = '{"period": 201809}'
                     mock_squeues.return_value = msgbody, 666
 
