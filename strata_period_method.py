@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     Applies Calculate strata function to row of DataFrame.
     :param event: Event Object.
     :param context: Context object.
-    :return: strata_out - Input data with strata added on - Type: JSON
+    :return: strata_out - Dict with "success" and "data" or "success and "error".
     """
     current_module = "Strata - Method"
     error_message = ""
