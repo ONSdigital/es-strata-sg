@@ -51,8 +51,8 @@ def lambda_handler(event, context):
         )
 
         json_out = post_strata.to_json(orient="records")
-        strata_out = json.loads(json_out)
 
+        final_output = {"data": json_out}
         logger.info("Successfully calculated strata")
 
     except ValueError as e:
@@ -93,8 +93,8 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-
-    return strata_out
+    final_output['success'] = True
+    return final_output
 
 
 def calculate_strata(row, value_column, strata_column):

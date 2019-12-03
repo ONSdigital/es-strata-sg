@@ -40,7 +40,6 @@ def lambda_handler(event, context):
     logger = logging.getLogger("Strata")
     logger.setLevel(10)
     try:
-
         logger.info("Strata Wrangler Begun")
         # Set up clients
         var_lambda = boto3.client("lambda", region_name="eu-west-2")
@@ -73,7 +72,7 @@ def lambda_handler(event, context):
         json_response = returned_data.get("Payload").read().decode("UTF-8")
         logger.info("Successfully invoked lambda")
 
-        if str(type(json_response)) != "<class 'str'>":
+        if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
 
         funk.save_data(bucket_name, out_file_name, json_response, sqs_queue_url,
@@ -163,6 +162,6 @@ def lambda_handler(event, context):
         if (len(error_message)) > 0:
             logger.error(log_message)
             return {"success": False, "error": error_message}
-        else:
-            logger.info("Successfully completed module: " + current_module)
-            return {"success": True, "checkpoint": checkpoint}
+
+    logger.info("Successfully completed module: " + current_module)
+    return {"success": True, "checkpoint": checkpoint}
