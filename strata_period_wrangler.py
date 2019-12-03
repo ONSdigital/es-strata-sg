@@ -70,8 +70,10 @@ def lambda_handler(event, context):
         logger.info("Successfully retrieved data from sqs")
 
         returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
+        logger.info("Successfully invoked method.")
+
         json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
-        logger.info("Successfully invoked lambda")
+        logger.info("JSON extracted from method response.")
 
         if not json_response['success']:
             raise funk.MethodFailure(json_response['error'])
