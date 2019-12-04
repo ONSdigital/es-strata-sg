@@ -4,9 +4,8 @@ import os
 
 import boto3
 from botocore.exceptions import ClientError, IncompleteReadError
-from marshmallow import Schema, fields
-
 from esawsfunctions import funk
+from marshmallow import Schema, fields
 
 
 class EnvironSchema(Schema):
