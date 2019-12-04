@@ -283,7 +283,7 @@ class TestStrata(unittest.TestCase):
                             {"RuntimeVariables": {"checkpoint": 666}},
                             context_object,
                         )
-                        print(response)
+
                         assert "success" in response
                         assert response["success"] is True
 
