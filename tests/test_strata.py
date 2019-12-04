@@ -229,7 +229,8 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
+                    as mock_squeues:
                 msgbody = '{"period": 201809}'
                 mock_squeues.return_value = msgbody, 666
 
@@ -266,7 +267,8 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
+                    as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -304,7 +306,8 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
+                    as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -343,7 +346,8 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
+                    as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -387,7 +391,8 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
+                    as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
@@ -433,7 +438,8 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.funk.get_data") as mock_squeues:
+            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
+                    as mock_squeues:
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
