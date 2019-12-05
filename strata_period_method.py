@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -19,7 +18,7 @@ def lambda_handler(event, context):
     Applies Calculate strata function to row of DataFrame.
     :param event: Event Object.
     :param context: Context object.
-    :return: strata_out - Input data with strata added on - Type: JSON
+    :return: strata_out - Dict with "success" and "data" or "success and "error".
     """
     current_module = "Strata - Method"
     error_message = ""
@@ -49,11 +48,10 @@ def lambda_handler(event, context):
             value_column=value_column,
             axis=1,
         )
-
+        logger.info("Successfully ran calculation")
         json_out = post_strata.to_json(orient="records")
-        strata_out = json.loads(json_out)
 
-        logger.info("Successfully calculated strata")
+        final_output = {"data": json_out}
 
     except ValueError as e:
         error_message = (
@@ -93,8 +91,8 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-
-    return strata_out
+    final_output['success'] = True
+    return final_output
 
 
 def calculate_strata(row, value_column, strata_column):

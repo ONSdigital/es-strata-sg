@@ -80,10 +80,12 @@ class TestStrata(unittest.TestCase):
 
             actual_output = strata_period_method.\
                 lambda_handler(json_content, context_object)
-            actual_output_dataframe = pd.DataFrame(actual_output)
+
+            actual_output_dataframe = pd.DataFrame(json.loads(actual_output['data']))
 
             with open("tests/fixtures/strata_out.json") as file:
                 expected_method_output = json.load(file)
+
                 expected_output_dataframe = pd.DataFrame(expected_method_output)
 
             assert_frame_equal(actual_output_dataframe, expected_output_dataframe)
@@ -268,10 +270,12 @@ class TestStrata(unittest.TestCase):
                 with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
                     mock_client_object = mock.Mock()
                     mock_client.return_value = mock_client_object
-                    with open("tests/fixtures/strata_out.json", "rb") as file:
-                        mock_client_object.invoke.return_value = {
-                            "Payload": StreamingBody(file, 5894)
-                        }
+                    with open("tests/fixtures/strata_out.json", "r") as file:
+                        mock_client_object.invoke.return_value\
+                            .get.return_value.read\
+                            .return_value.decode.return_value = json.dumps({
+                             "data": file.read(), "success": True
+                            })
                         msgbody = '{"period": 201809}'
                         mock_squeues.return_value = msgbody, 666
 
@@ -436,7 +440,8 @@ class TestStrata(unittest.TestCase):
 
                     mock_client_object.invoke.return_value.get.return_value \
                         .read.return_value.decode.return_value = \
-                        {"error": "This is an error message"}
+                        json.dumps({"error": "This is an error message",
+                                    "success": False})
                     msgbody = '{"period": 201809}'
                     mock_squeues.return_value = msgbody, 666
 
