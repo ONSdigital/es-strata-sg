@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-cd strata-deploy-repository
+cd strata-repository
 echo Destroying serverless bundle...
 serverless remove --verbose;
