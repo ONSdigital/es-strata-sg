@@ -4,7 +4,7 @@ import os
 
 import boto3
 from botocore.exceptions import ClientError, IncompleteReadError
-from esawsfunctions import funk
+from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
 
@@ -62,10 +62,10 @@ def lambda_handler(event, context):
         sqs_message_group_id = config['sqs_message_group_id']
         sqs_queue_url = config['sqs_queue_url']
 
-        message_json, receipt_handle = funk.get_data(sqs_queue_url,
-                                                     bucket_name,
-                                                     in_file_name,
-                                                     incoming_message_group)
+        message_json, receipt_handle = aws_functions.get_data(sqs_queue_url,
+                                                              bucket_name,
+                                                              in_file_name,
+                                                              incoming_message_group)
 
         logger.info("Successfully retrieved data from sqs")
 
@@ -76,10 +76,10 @@ def lambda_handler(event, context):
         logger.info("JSON extracted from method response.")
 
         if not json_response['success']:
-            raise funk.MethodFailure(json_response['error'])
+            raise exception_classes.MethodFailure(json_response['error'])
 
-        funk.save_data(bucket_name, out_file_name, json_response['data'], sqs_queue_url,
-                       sqs_message_group_id)
+        aws_functions.save_data(bucket_name, out_file_name, json_response['data'],
+                                sqs_queue_url, sqs_message_group_id)
 
         logger.info("Successfully sent data to s3")
 
@@ -90,7 +90,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully deleted input data from s3")
 
-        funk.send_sns_message(checkpoint, sns_topic_arn, "Strata.")
+        aws_functions.send_sns_message(checkpoint, sns_topic_arn, "Strata.")
 
         logger.info("Successfully sent message to sns")
 
@@ -146,7 +146,7 @@ def lambda_handler(event, context):
             + str(context.aws_request_id)
         )
         log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except funk.MethodFailure as e:
+    except exception_classes.MethodFailure as e:
         error_message = e.error_message
         log_message = "Error in " + method_name + "."
     except Exception as e:
