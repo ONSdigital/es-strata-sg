@@ -41,7 +41,9 @@ class TestStrata(unittest.TestCase):
                 "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
                 "in_file_name": "test1.json",
                 "out_file_name": "test2.json",
-                "bucket_name": "Pie"
+                "bucket_name": "Pie",
+                "segmentation": "strata",
+                "reference": "responder_id"
             },
         )
         cls.mock_os_w = cls.mock_os_wrangler_patcher.start()
@@ -50,6 +52,7 @@ class TestStrata(unittest.TestCase):
             "os.environ",
             {
                 "strata_column": "strata",
+                "period_column": "period",
                 "value_column": "Q608_total",
             },
         )
@@ -164,7 +167,7 @@ class TestStrata(unittest.TestCase):
             # Removing the method_name to allow for test of missing parameter
             strata_period_wrangler.os.environ.pop("method_name")
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 123, "period": "201809"}},
+                {"RuntimeVariables": {"checkpoint": 123, "period": 201809}},
                 context_object,
             )
 
@@ -180,7 +183,8 @@ class TestStrata(unittest.TestCase):
             with mock.patch("strata_period_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                    {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                    context_object
                 )
                 assert "success" in response
                 assert response["success"] is False
@@ -203,7 +207,8 @@ class TestStrata(unittest.TestCase):
             },
         ):
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                context_object
             )
             assert "success" in response
             assert response["success"] is False
@@ -235,7 +240,8 @@ class TestStrata(unittest.TestCase):
                 mock_squeues.return_value = msgbody, 666
 
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666}}, context_object
+                    {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                    context_object
                 )
             assert "success" in response
             assert response["success"] is False
@@ -282,7 +288,7 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.return_value = msgbody, 666
 
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666}},
+                            {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
                             context_object,
                         )
 
@@ -319,7 +325,7 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.return_value = msgbody,  666
 
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666}},
+                            {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
                             context_object,
                         )
 
@@ -357,7 +363,7 @@ class TestStrata(unittest.TestCase):
                     msgbody = '{"period": 201809}'
                     mock_squeues.return_value = msgbody, 666
                     response = strata_period_wrangler.lambda_handler(
-                        {"RuntimeVariables": {"checkpoint": 666}},
+                        {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
                         context_object,
                     )
 
@@ -404,7 +410,7 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.side_effect = KeyError("AARRRRGHH!!")
                         mock_squeues.return_value = msgbody, 666
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666}},
+                            {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
                             context_object,
                         )
 
@@ -452,7 +458,7 @@ class TestStrata(unittest.TestCase):
                     mock_squeues.return_value = msgbody, 666
 
                     response = strata_period_wrangler.lambda_handler(
-                        {"RuntimeVariables": {"checkpoint": 666}},
+                        {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
                         context_object,
                     )
 
