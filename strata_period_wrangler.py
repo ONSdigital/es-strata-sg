@@ -66,9 +66,11 @@ def lambda_handler(event, context):
         sns_topic_arn = config['sns_topic_arn']
         sqs_message_group_id = config['sqs_message_group_id']
         sqs_queue_url = config['sqs_queue_url']
+        survey_column = event['RuntimeVariables']['survey_column']
         period_column = config['period_column']
         segmentation = config['segmentation']
         reference = config['reference']
+        region_column = event['RuntimeVariables']['distinct_values'][0]
         current_period = event['RuntimeVariables']['period']
         previous_period = general_functions.calculate_adjacent_periods(current_period,
                                                                        "03")
@@ -79,7 +81,11 @@ def lambda_handler(event, context):
 
         logger.info("Successfully retrieved data from sqs")
 
-        returned_data = var_lambda.invoke(FunctionName=method_name, Payload=message_json)
+        json_payload = {"data": message_json,
+                        "survey_column": survey_column,
+                        "region_column": region_column}
+        returned_data = var_lambda.invoke(FunctionName=method_name,
+                                          Payload=json.dumps(json_payload))
         logger.info("Successfully invoked method.")
 
         json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
