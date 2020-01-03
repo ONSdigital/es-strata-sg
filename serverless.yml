@@ -25,7 +25,7 @@ custom:
 
 functions:
   strata-period-wrangler:
-    name: es-strata-period-wrangler
+    name: es-strata-wrangler
     handler: strata_period_wrangler.lambda_handler
     package:
       include:
