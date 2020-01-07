@@ -53,7 +53,7 @@ class TestStrata(unittest.TestCase):
             {
                 "strata_column": "strata",
                 "period_column": "period",
-                "value_column": "Q608_total",
+                "value_column": "Q608_total"
             },
         )
         cls.mock_os_m = cls.mock_os_method_patcher.start()
@@ -80,9 +80,11 @@ class TestStrata(unittest.TestCase):
         ):
             with open("tests/fixtures/strata_in.json") as file:
                 json_content = json.load(file)
-
+            payload = {"data": json_content,
+                       "region_column": "region",
+                       "survey_column": "survey"}
             actual_output = strata_period_method.\
-                lambda_handler(json_content, context_object)
+                lambda_handler(payload, context_object)
 
             actual_output_dataframe = pd.DataFrame(json.loads(actual_output['data']))
 
@@ -110,7 +112,7 @@ class TestStrata(unittest.TestCase):
         )
 
     def test_for_bad_data(self):
-        response = strata_period_method.lambda_handler("", context_object)
+        response = strata_period_method.lambda_handler({"data": ""}, context_object)
         assert response["error"].__contains__("""Input Error""")
 
     def test_strata_fail(self):
@@ -121,12 +123,15 @@ class TestStrata(unittest.TestCase):
             with open("tests/fixtures/strata_in.json", "r") as file:
                 content = file.read()
                 dataframe_content = pd.DataFrame(json.loads(content))
-                dataframe_content.drop("land_or_marine", inplace=True, axis=1)
+                dataframe_content.drop("survey", inplace=True, axis=1)
 
                 json_content = json.loads(dataframe_content.to_json(orient="records"))
 
+                payload = {"data": json_content,
+                           "region_column": "region",
+                           "survey_column": "survey"}
                 response = strata_period_method.lambda_handler(
-                    json_content, context_object
+                    payload, context_object
                 )
                 assert response["error"].__contains__("""Key Error in Strata - Method""")
 
@@ -207,7 +212,11 @@ class TestStrata(unittest.TestCase):
             },
         ):
             response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                {"RuntimeVariables": {
+                    "checkpoint": 666,
+                    "period": 201809,
+                    "distinct_values": ["region"],
+                    "survey_column": "survey"}},
                 context_object
             )
             assert "success" in response
@@ -240,7 +249,11 @@ class TestStrata(unittest.TestCase):
                 mock_squeues.return_value = msgbody, 666
 
                 response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                    {"RuntimeVariables": {
+                        "checkpoint": 666,
+                        "period": 201809,
+                        "distinct_values": ["region"],
+                        "survey_column": "survey"}},
                     context_object
                 )
             assert "success" in response
@@ -288,7 +301,11 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.return_value = msgbody, 666
 
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                            {"RuntimeVariables": {
+                                "checkpoint": 666,
+                                "period": 201809,
+                                "distinct_values": ["region"],
+                                "survey_column": "survey"}},
                             context_object,
                         )
 
@@ -325,7 +342,11 @@ class TestStrata(unittest.TestCase):
                         mock_squeues.return_value = msgbody,  666
 
                         response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                            {"RuntimeVariables": {
+                                "checkpoint": 666,
+                                "period": 201809,
+                                "distinct_values": ["region"],
+                                "survey_column": "survey"}},
                             context_object,
                         )
 
@@ -363,7 +384,11 @@ class TestStrata(unittest.TestCase):
                     msgbody = '{"period": 201809}'
                     mock_squeues.return_value = msgbody, 666
                     response = strata_period_wrangler.lambda_handler(
-                        {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                        {"RuntimeVariables": {
+                            "checkpoint": 666,
+                            "period": 201809,
+                            "distinct_values": ["region"],
+                            "survey_column": "survey"}},
                         context_object,
                     )
 
@@ -458,7 +483,11 @@ class TestStrata(unittest.TestCase):
                     mock_squeues.return_value = msgbody, 666
 
                     response = strata_period_wrangler.lambda_handler(
-                        {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
+                        {"RuntimeVariables": {
+                            "checkpoint": 666,
+                            "period": 201809,
+                            "distinct_values": ["region"],
+                            "survey_column": "survey"}},
                         context_object,
                     )
 
