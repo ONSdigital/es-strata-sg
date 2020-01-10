@@ -81,7 +81,7 @@ def lambda_handler(event, context):
 
         logger.info("Successfully retrieved data from sqs")
 
-        json_payload = {"data": message_json,
+        json_payload = {"data": json.loads(message_json),
                         "survey_column": survey_column,
                         "region_column": region_column}
         returned_data = var_lambda.invoke(FunctionName=method_name,
