@@ -95,7 +95,7 @@ def lambda_handler(event, context):
             raise exception_classes.MethodFailure(json_response['error'])
 
         # Turn json back into dataframe
-        output_dataframe = pd.read_json(json_response['data'])
+        output_dataframe = pd.read_json(json_response['data'], dtype=False)
 
         # Perform mismatch detection
         output_dataframe, anomalies = strata_mismatch_detector(
