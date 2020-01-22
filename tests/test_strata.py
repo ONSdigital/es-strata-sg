@@ -5,6 +5,7 @@ import unittest.mock as mock
 import boto3
 import pandas as pd
 from botocore.response import StreamingBody
+from es_aws_functions import exception_classes
 from moto import mock_lambda, mock_s3, mock_sqs
 from pandas.util.testing import assert_frame_equal
 
@@ -171,14 +172,15 @@ class TestStrata(unittest.TestCase):
         ):
             # Removing the method_name to allow for test of missing parameter
             strata_period_wrangler.os.environ.pop("method_name")
-            response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {"checkpoint": 123, "period": 201809}},
-                context_object,
-            )
-
-            assert response["error"].__contains__(
-                """Error validating environment parameters:"""
-            )
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                strata_period_wrangler.lambda_handler(
+                    {"RuntimeVariables": {"checkpoint": 123, "period": 201809,
+                                          "id": "bob"}},
+                    context_object,
+                )
+            assert "Error validating environment parameters" \
+                   in exc_info.exception.error_message
 
     def test_raise_exception_exception_wrangles(self):
         with mock.patch.dict(
@@ -187,13 +189,14 @@ class TestStrata(unittest.TestCase):
         ):
             with mock.patch("strata_period_wrangler.boto3.client") as mocked:
                 mocked.side_effect = Exception("AARRRRGHH!!")
-                response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
-                    context_object
-                )
-                assert "success" in response
-                assert response["success"] is False
-                assert response["error"].__contains__("""AARRRRGHH!!""")
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    strata_period_wrangler.lambda_handler(
+                        {"RuntimeVariables": {"checkpoint": 666, "period": 201809,
+                                              "id": "bob"}},
+                        context_object
+                    )
+                assert "AARRRRGHH!!" in exc_info.exception.error_message
 
     @mock_sqs
     def test_wrangles_fail_to_get_from_sqs(self):
@@ -211,17 +214,18 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            response = strata_period_wrangler.lambda_handler(
-                {"RuntimeVariables": {
-                    "checkpoint": 666,
-                    "period": 201809,
-                    "distinct_values": ["region"],
-                    "survey_column": "survey"}},
-                context_object
-            )
-            assert "success" in response
-            assert response["success"] is False
-            assert response["error"].__contains__("""AWS Error""")
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                strata_period_wrangler.lambda_handler(
+                    {"RuntimeVariables": {
+                        "checkpoint": 666,
+                        "period": 201809,
+                        "distinct_values": ["region"],
+                        "survey_column": "survey",
+                        "id": "bob"}},
+                    context_object
+                )
+            assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sqs
     def test_wrangles_invoke_fails(self):
@@ -247,18 +251,18 @@ class TestStrata(unittest.TestCase):
                     as mock_squeues:
                 msgbody = '{"period": 201809}'
                 mock_squeues.return_value = msgbody, 666
-
-                response = strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {
-                        "checkpoint": 666,
-                        "period": 201809,
-                        "distinct_values": ["region"],
-                        "survey_column": "survey"}},
-                    context_object
-                )
-            assert "success" in response
-            assert response["success"] is False
-            assert response["error"].__contains__("""AWS Error""")
+                with unittest.TestCase.assertRaises(
+                        self, exception_classes.LambdaFailure) as exc_info:
+                    strata_period_wrangler.lambda_handler(
+                        {"RuntimeVariables": {
+                            "checkpoint": 666,
+                            "period": 201809,
+                            "distinct_values": ["region"],
+                            "survey_column": "survey",
+                            "id": "bob"}},
+                        context_object
+                    )
+                assert "AWS Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -305,7 +309,8 @@ class TestStrata(unittest.TestCase):
                                 "checkpoint": 666,
                                 "period": 201809,
                                 "distinct_values": ["region"],
-                                "survey_column": "survey"}},
+                                "survey_column": "survey",
+                                "id": "bob"}},
                             context_object,
                         )
 
@@ -340,21 +345,19 @@ class TestStrata(unittest.TestCase):
                         }
                         msgbody = '{"period": 201809}'
                         mock_squeues.return_value = msgbody,  666
-
-                        response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {
-                                "checkpoint": 666,
-                                "period": 201809,
-                                "distinct_values": ["region"],
-                                "survey_column": "survey"}},
-                            context_object,
-                        )
-
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert response["error"].__contains__(
-                            """Incomplete Lambda response"""
-                        )
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            strata_period_wrangler.lambda_handler(
+                                {"RuntimeVariables": {
+                                    "checkpoint": 666,
+                                    "period": 201809,
+                                    "distinct_values": ["region"],
+                                    "survey_column": "survey",
+                                    "id": "bob"}},
+                                context_object,
+                            )
+                        assert "Incomplete Lambda response" in \
+                               exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -383,18 +386,18 @@ class TestStrata(unittest.TestCase):
                     }
                     msgbody = '{"period": 201809}'
                     mock_squeues.return_value = msgbody, 666
-                    response = strata_period_wrangler.lambda_handler(
-                        {"RuntimeVariables": {
-                            "checkpoint": 666,
-                            "period": 201809,
-                            "distinct_values": ["region"],
-                            "survey_column": "survey"}},
-                        context_object,
-                    )
-
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert response["error"].__contains__("""Bad data""")
+                    with unittest.TestCase.assertRaises(
+                            self, exception_classes.LambdaFailure) as exc_info:
+                        strata_period_wrangler.lambda_handler(
+                            {"RuntimeVariables": {
+                                "checkpoint": 666,
+                                "period": 201809,
+                                "distinct_values": ["region"],
+                                "survey_column": "survey",
+                                "id": "bob"}},
+                            context_object,
+                        )
+                    assert "Bad data" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -434,14 +437,14 @@ class TestStrata(unittest.TestCase):
                         msgbody = '{"period": 201809}'
                         mock_squeues.side_effect = KeyError("AARRRRGHH!!")
                         mock_squeues.return_value = msgbody, 666
-                        response = strata_period_wrangler.lambda_handler(
-                            {"RuntimeVariables": {"checkpoint": 666, "period": 201809}},
-                            context_object,
-                        )
-
-                        assert "success" in response
-                        assert response["success"] is False
-                        assert response["error"].__contains__("""Key Error""")
+                        with unittest.TestCase.assertRaises(
+                                self, exception_classes.LambdaFailure) as exc_info:
+                            strata_period_wrangler.lambda_handler(
+                                {"RuntimeVariables": {"checkpoint": 666, "period": 201809,
+                                                      "id": "bob"}},
+                                context_object,
+                            )
+                        assert "Key Error" in exc_info.exception.error_message
 
     @mock_sqs
     @mock_lambda
@@ -469,28 +472,28 @@ class TestStrata(unittest.TestCase):
                 "bucket_name": "Pie"
             },
         ):
-            with mock.patch("strata_period_wrangler.aws_functions.get_data")\
-                    as mock_squeues:
-                with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
-                    mock_client_object = mock.Mock()
-                    mock_client.return_value = mock_client_object
 
-                    mock_client_object.invoke.return_value.get.return_value \
-                        .read.return_value.decode.return_value = \
-                        json.dumps({"error": "This is an error message",
-                                    "success": False})
-                    msgbody = '{"period": 201809}'
-                    mock_squeues.return_value = msgbody, 666
+            with unittest.TestCase.assertRaises(
+                    self, exception_classes.LambdaFailure) as exc_info:
+                with mock.patch("strata_period_wrangler.aws_functions.get_data") \
+                        as mock_squeues:
+                    with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
+                        mock_client_object = mock.Mock()
+                        mock_client.return_value = mock_client_object
 
-                    response = strata_period_wrangler.lambda_handler(
-                        {"RuntimeVariables": {
-                            "checkpoint": 666,
-                            "period": 201809,
-                            "distinct_values": ["region"],
-                            "survey_column": "survey"}},
-                        context_object,
-                    )
-
-                    assert "success" in response
-                    assert response["success"] is False
-                    assert response["error"].__contains__("""This is an error message""")
+                        mock_client_object.invoke.return_value.get.return_value \
+                            .read.return_value.decode.return_value = \
+                            json.dumps({"error": "This is an error message",
+                                        "success": False})
+                        msgbody = '{"period": 201809}'
+                        mock_squeues.return_value = msgbody, 666
+                        strata_period_wrangler.lambda_handler(
+                            {"RuntimeVariables": {
+                                "checkpoint": 666,
+                                "period": 201809,
+                                "distinct_values": ["region"],
+                                "survey_column": "survey",
+                                "id": "bob"}},
+                            context_object,
+                        )
+            assert "This is an error message" in exc_info.exception.error_message
