@@ -176,7 +176,7 @@ class TestStrata(unittest.TestCase):
                     self, exception_classes.LambdaFailure) as exc_info:
                 strata_period_wrangler.lambda_handler(
                     {"RuntimeVariables": {"checkpoint": 123, "period": 201809,
-                                          "id": "bob"}},
+                                          "run_id": "bob"}},
                     context_object,
                 )
             assert "Error validating environment parameters" \
@@ -193,7 +193,7 @@ class TestStrata(unittest.TestCase):
                         self, exception_classes.LambdaFailure) as exc_info:
                     strata_period_wrangler.lambda_handler(
                         {"RuntimeVariables": {"checkpoint": 666, "period": 201809,
-                                              "id": "bob"}},
+                                              "run_id": "bob"}},
                         context_object
                     )
                 assert "AARRRRGHH!!" in exc_info.exception.error_message
@@ -222,7 +222,7 @@ class TestStrata(unittest.TestCase):
                         "period": 201809,
                         "distinct_values": ["region"],
                         "survey_column": "survey",
-                        "id": "bob"}},
+                        "run_id": "bob"}},
                     context_object
                 )
             assert "AWS Error" in exc_info.exception.error_message
@@ -259,7 +259,7 @@ class TestStrata(unittest.TestCase):
                             "period": 201809,
                             "distinct_values": ["region"],
                             "survey_column": "survey",
-                            "id": "bob"}},
+                            "run_id": "bob"}},
                         context_object
                     )
                 assert "AWS Error" in exc_info.exception.error_message
@@ -310,7 +310,7 @@ class TestStrata(unittest.TestCase):
                                 "period": 201809,
                                 "distinct_values": ["region"],
                                 "survey_column": "survey",
-                                "id": "bob"}},
+                                "run_id": "bob"}},
                             context_object,
                         )
 
@@ -353,7 +353,7 @@ class TestStrata(unittest.TestCase):
                                     "period": 201809,
                                     "distinct_values": ["region"],
                                     "survey_column": "survey",
-                                    "id": "bob"}},
+                                    "run_id": "bob"}},
                                 context_object,
                             )
                         assert "Incomplete Lambda response" in \
@@ -394,7 +394,7 @@ class TestStrata(unittest.TestCase):
                                 "period": 201809,
                                 "distinct_values": ["region"],
                                 "survey_column": "survey",
-                                "id": "bob"}},
+                                "run_id": "bob"}},
                             context_object,
                         )
                     assert "Bad data" in exc_info.exception.error_message
@@ -441,7 +441,7 @@ class TestStrata(unittest.TestCase):
                                 self, exception_classes.LambdaFailure) as exc_info:
                             strata_period_wrangler.lambda_handler(
                                 {"RuntimeVariables": {"checkpoint": 666, "period": 201809,
-                                                      "id": "bob"}},
+                                                      "run_id": "bob"}},
                                 context_object,
                             )
                         assert "Key Error" in exc_info.exception.error_message
@@ -493,7 +493,7 @@ class TestStrata(unittest.TestCase):
                                 "period": 201809,
                                 "distinct_values": ["region"],
                                 "survey_column": "survey",
-                                "id": "bob"}},
+                                "run_id": "bob"}},
                             context_object,
                         )
             assert "This is an error message" in exc_info.exception.error_message

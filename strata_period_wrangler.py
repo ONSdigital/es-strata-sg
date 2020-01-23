@@ -51,7 +51,7 @@ def lambda_handler(event, context):
         logger.info("Strata Wrangler Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['id']
+        run_id = event['RuntimeVariables']['run_id']
         # Set up clients
         var_lambda = boto3.client("lambda", region_name="eu-west-2")
 
