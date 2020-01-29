@@ -1,3 +1,4 @@
+---
 service: es-strata-sg
 provider:
   name: aws
