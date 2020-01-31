@@ -5,7 +5,7 @@ import os
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError, IncompleteReadError
-from es_aws_functions import aws_functions, exception_classes, general_functions
+from es_aws_functions import aws_functions, exception_classes
 from marshmallow import Schema, fields
 
 
@@ -76,8 +76,7 @@ def lambda_handler(event, context):
         reference = config['reference']
         region_column = event['RuntimeVariables']['distinct_values'][0]
         current_period = event['RuntimeVariables']['period']
-        previous_period = general_functions.calculate_adjacent_periods(current_period,
-                                                                       "03")
+
         message_json, receipt_handle = aws_functions.get_data(sqs_queue_url,
                                                               bucket_name,
                                                               in_file_name,
@@ -112,19 +111,10 @@ def lambda_handler(event, context):
             "current_" + segmentation,
             "previous_" + segmentation,)
 
-        # split dataframe for current and previous
-        previous_dataframe = output_dataframe[
-            output_dataframe[period_column] == int(previous_period)]
-        current_dataframe = output_dataframe[
-            output_dataframe[period_column] == int(current_period)]
-
-        # Save previous period data to s3 for apply to pick up later
-        aws_functions.save_to_s3(bucket_name, 'prev_datafile.json',
-                                 previous_dataframe.to_json(orient='records'))
         logger.info("Successfully saved input data")
         # Push current period data onwards
         aws_functions.save_data(bucket_name, out_file_name,
-                                current_dataframe.to_json(orient='records'),
+                                output_dataframe.to_json(orient='records'),
                                 sqs_queue_url, sqs_message_group_id)
 
         logger.info("Successfully sent data to s3")
