@@ -80,7 +80,8 @@ def lambda_handler(event, context):
         message_json, receipt_handle = aws_functions.get_data(sqs_queue_url,
                                                               bucket_name,
                                                               in_file_name,
-                                                              incoming_message_group)
+                                                              incoming_message_group,
+                                                              run_id)
 
         logger.info("Successfully retrieved data from sqs")
 
@@ -115,7 +116,7 @@ def lambda_handler(event, context):
         # Push current period data onwards
         aws_functions.save_data(bucket_name, out_file_name,
                                 output_dataframe.to_json(orient='records'),
-                                sqs_queue_url, sqs_message_group_id)
+                                sqs_queue_url, sqs_message_group_id, run_id)
 
         logger.info("Successfully sent data to s3")
 
