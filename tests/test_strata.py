@@ -38,10 +38,6 @@ class TestStrata(unittest.TestCase):
                 "checkpoint": "mock-checkpoint",
                 "sqs_queue_url": "sausages",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "in_file_name": "test1.json",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie",
                 "segmentation": "strata",
                 "reference": "responder_id"
@@ -167,7 +163,7 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
+                "outgoing_message_group_id": "mock-group-id",
             },
         ):
             # Removing the method_name to allow for test of missing parameter
@@ -175,9 +171,18 @@ class TestStrata(unittest.TestCase):
             with unittest.TestCase.assertRaises(
                     self, exception_classes.LambdaFailure) as exc_info:
                 strata_period_wrangler.lambda_handler(
-                    {"RuntimeVariables": {"checkpoint": 123, "period": 201809,
-                                          "run_id": "bob",
-                                          "queue_url": "Earl"}},
+                    {
+                        "RuntimeVariables": {
+                            "checkpoint": 123,
+                            "period": 201809,
+                            "run_id": "bob",
+                            "queue_url": "Earl",
+                            "outgoing_message_group_id": "mock-group-id",
+                            "incoming_message_group_id": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                            "in_file_name": "test1.json",
+                            "out_file_name": "test2.json"
+                           }
+                    },
                     context_object,
                 )
             assert "Error validating environment parameters" \
@@ -208,9 +213,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -221,7 +223,10 @@ class TestStrata(unittest.TestCase):
                         "checkpoint": 666,
                         "period": 201809,
                         "distinct_values": ["region"],
-                        "in_file_name": {"strata": "test1.json"},
+                        "outgoing_message_group_id": "mock-group-id",
+                        "incoming_message_group_id": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                        "in_file_name": "test1.json",
+                        "out_file_name": "test2.json",
                         "survey_column": "survey",
                         "run_id": "bob",
                         "queue_url": "Earl"}},
@@ -241,9 +246,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -258,7 +260,10 @@ class TestStrata(unittest.TestCase):
                             "checkpoint": 666,
                             "period": 201809,
                             "distinct_values": ["region"],
-                            "in_file_name": {"strata": "test1.json"},
+                            "outgoing_message_group_id": "mock-group-id",
+                            "incoming_message_group_id": "IIIIINNNNCOOOOMMMMIING!!!!!",
+                            "in_file_name": "test1.json",
+                            "out_file_name": "test2.json",
                             "survey_column": "survey",
                             "run_id": "bob",
                             "queue_url": "Earl"}},
@@ -284,9 +289,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -309,7 +311,10 @@ class TestStrata(unittest.TestCase):
                                 "checkpoint": 666,
                                 "period": 201809,
                                 "distinct_values": ["region"],
-                                "in_file_name": {"strata": "test1.json"},
+                                "outgoing_message_group_id": "mock-group-id",
+                                "incoming_message_group_id": "IIINNNNCOOOOMMMMIING!!!!!",
+                                "in_file_name": "test1.json",
+                                "out_file_name": "test2.json",
                                 "survey_column": "survey",
                                 "run_id": "bob",
                                 "queue_url": "Earl"}},
@@ -328,9 +333,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -352,7 +354,10 @@ class TestStrata(unittest.TestCase):
                                     "checkpoint": 666,
                                     "period": 201809,
                                     "distinct_values": ["region"],
-                                    "in_file_name": {"strata": "test1.json"},
+                                    "outgoing_message_group_id": "mock-group-id",
+                                    "incoming_message_group_id": "IIIIINNCOOOOMMMIING!!!",
+                                    "in_file_name": "test1.json",
+                                    "out_file_name": "test2.json",
                                     "survey_column": "survey",
                                     "run_id": "bob",
                                     "queue_url": "Earl"}},
@@ -370,9 +375,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -393,7 +395,10 @@ class TestStrata(unittest.TestCase):
                                 "checkpoint": 666,
                                 "period": 201809,
                                 "distinct_values": ["region"],
-                                "in_file_name": {"strata": "test1.json"},
+                                "outgoing_message_group_id": "mock-group-id",
+                                "incoming_message_group_id": "IIIIINNNNCOOOMMMMIING!!!!!",
+                                "in_file_name": "test1.json",
+                                "out_file_name": "test2.json",
                                 "survey_column": "survey",
                                 "run_id": "bob",
                                 "queue_url": "Earl"}},
@@ -419,10 +424,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "in_file_name": "test1.json",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -441,9 +442,18 @@ class TestStrata(unittest.TestCase):
                         with unittest.TestCase.assertRaises(
                                 self, exception_classes.LambdaFailure) as exc_info:
                             strata_period_wrangler.lambda_handler(
-                                {"RuntimeVariables": {"checkpoint": 666, "period": 201809,
-                                                      "run_id": "bob",
-                                                      "queue_url": "Earl"}},
+                                {
+                                    "RuntimeVariables": {
+                                        "checkpoint": 666,
+                                        "period": 201809,
+                                        "run_id": "bob",
+                                        "queue_url": "Earl",
+                                        "outgoing_message_group_id": "mock-group-id",
+                                        "incoming_message_group_id": "IIIIINNNCOMIING!!!",
+                                        "in_file_name": "test1.json",
+                                        "out_file_name": "test2.json",
+                                    }
+                                },
                                 context_object,
                             )
                         assert "Key Error" in exc_info.exception.error_message
@@ -466,9 +476,6 @@ class TestStrata(unittest.TestCase):
                 "sns_topic_arn": "mock:arn",
                 "checkpoint": "mock-checkpoint",
                 "method_name": "mock-name",
-                "sqs_message_group_id": "mock-group-id",
-                "incoming_message_group": "IIIIINNNNCOOOOMMMMIING!!!!!",
-                "out_file_name": "test2.json",
                 "bucket_name": "Pie"
             },
         ):
@@ -492,7 +499,10 @@ class TestStrata(unittest.TestCase):
                                 "checkpoint": 666,
                                 "period": 201809,
                                 "distinct_values": ["region"],
-                                "in_file_name": {"strata": "test1.json"},
+                                "outgoing_message_group_id": "mock-group-id",
+                                "incoming_message_group_id": "IIIIINNNNCOOOOMMMIING!!!!!",
+                                "in_file_name": "test1.json",
+                                "out_file_name": "test2.json",
                                 "survey_column": "survey",
                                 "run_id": "bob",
                                 "queue_url": "Earl"}},
