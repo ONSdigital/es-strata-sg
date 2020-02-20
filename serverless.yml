@@ -41,7 +41,6 @@ functions:
     environment:
       checkpoint: 2
       bucket_name: results-s3-bucket
-      in_file_name: enrichment_out.json
       incoming_message_group: enrichment-out
       method_name: es-strata-method
       out_file_name: strata_out.json
