@@ -41,11 +41,8 @@ functions:
     environment:
       checkpoint: 2
       bucket_name: results-s3-bucket
-      incoming_message_group: enrichment-out
       method_name: es-strata-method
-      out_file_name: strata_out.json
       sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
-      sqs_message_group_id: strata-out
       period_column: period
       segmentation: strata
       reference: responder_id
