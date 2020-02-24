@@ -70,6 +70,7 @@ def lambda_handler(event, context):
         current_period = event['RuntimeVariables']['period']
         in_file_name = event['RuntimeVariables']['in_file_name']
         incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
+        location = event['RuntimeVariables']['location']
         out_file_name = event['RuntimeVariables']['out_file_name']
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         region_column = event['RuntimeVariables']['distinct_values'][0]
@@ -82,7 +83,7 @@ def lambda_handler(event, context):
                                                               bucket_name,
                                                               in_file_name,
                                                               incoming_message_group_id,
-                                                              run_id)
+                                                              location)
 
         logger.info("Successfully retrieved data from sqs")
 
@@ -117,7 +118,7 @@ def lambda_handler(event, context):
         # Push current period data onwards
         aws_functions.save_data(bucket_name, out_file_name,
                                 output_dataframe.to_json(orient='records'),
-                                sqs_queue_url, outgoing_message_group_id, run_id)
+                                sqs_queue_url, outgoing_message_group_id, location)
 
         logger.info("Successfully sent data to s3")
 
