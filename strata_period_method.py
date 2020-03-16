@@ -35,15 +35,16 @@ def lambda_handler(event, context):
 
         logger.info("Vaildated params")
 
-        input_data = pd.DataFrame(event["data"])
-        survey_column = event["survey_column"]
-        region_column = event["region_column"]
+        data = event['RuntimeVariables']["data"]
+        survey_column = event['RuntimeVariables']["survey_column"]
+        region_column = event['RuntimeVariables']["region_column"]
 
         logger.info("Succesfully retrieved data from event")
 
         strata_column = config["strata_column"]
         value_column = config["value_column"]
 
+        input_data = pd.read_json(data, dtype=False)
         post_strata = input_data.apply(
             calculate_strata,
             strata_column=strata_column,

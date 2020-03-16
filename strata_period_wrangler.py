@@ -79,17 +79,22 @@ def lambda_handler(event, context):
 
         logger.info("Retrieved configuration variables.")
 
-        message_json, receipt_handle = aws_functions.get_data(sqs_queue_url,
-                                                              bucket_name,
-                                                              in_file_name,
-                                                              incoming_message_group_id,
-                                                              location)
+        data_df, receipt_handle = aws_functions.get_dataframe(
+            sqs_queue_url,
+            bucket_name,
+            in_file_name,
+            incoming_message_group_id,
+            location)
+        logger.info("Successfully retrieved data from s3")
 
-        logger.info("Successfully retrieved data from sqs")
-
-        json_payload = {"data": json.loads(message_json),
-                        "survey_column": survey_column,
-                        "region_column": region_column}
+        data_json = data_df.to_json(orient="records")
+        json_payload = {
+            "RuntimeVariables": {
+                "data": data_json,
+                "survey_column": survey_column,
+                "region_column": region_column
+            }
+        }
         returned_data = var_lambda.invoke(FunctionName=method_name,
                                           Payload=json.dumps(json_payload))
         logger.info("Successfully invoked method.")
