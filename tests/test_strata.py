@@ -29,7 +29,8 @@ method_runtime_variables = {
     "RuntimeVariables": {
         "data": None,
         "region_column": "region",
-        "survey_column": "survey"
+        "survey_column": "survey",
+        "run_id": "bob"
     }
 }
 
@@ -60,7 +61,7 @@ wrangler_runtime_variables = {
     [
         (lambda_wrangler_function, wrangler_runtime_variables,
          wrangler_environment_variables, None,
-         "AWS Error", test_generic_library.wrangler_assert)
+         "ClientError", test_generic_library.wrangler_assert)
     ])
 def test_client_error(which_lambda, which_runtime_variables,
                       which_environment_variables, which_data,
@@ -76,10 +77,10 @@ def test_client_error(which_lambda, which_runtime_variables,
     [
         (lambda_method_function, method_runtime_variables,
          method_environment_variables, "strata_period_method.EnvironSchema",
-         "General Error", test_generic_library.method_assert),
+         "'Exception'", test_generic_library.method_assert),
         (lambda_wrangler_function, wrangler_runtime_variables,
          wrangler_environment_variables, "strata_period_wrangler.EnvironSchema",
-         "General Error", test_generic_library.wrangler_assert)
+         "'Exception", test_generic_library.wrangler_assert)
     ])
 def test_general_error(which_lambda, which_runtime_variables,
                        which_environment_variables, mockable_function,
@@ -99,16 +100,17 @@ def test_incomplete_read_error(mock_s3_get):
                                                wrangler_runtime_variables,
                                                wrangler_environment_variables,
                                                file_list,
-                                               "strata_period_wrangler")
+                                               "strata_period_wrangler",
+                                               "IncompleteReadError")
 
 
 @pytest.mark.parametrize(
     "which_lambda,expected_message,assertion,which_environment_variables",
     [
         (lambda_method_function, method_environment_variables,
-         "Key Error", test_generic_library.method_assert),
+         "KeyError", test_generic_library.method_assert),
         (lambda_wrangler_function, wrangler_environment_variables,
-         "Key Error", test_generic_library.wrangler_assert)
+         "KeyError", test_generic_library.wrangler_assert)
     ])
 def test_key_error(which_lambda, expected_message,
                    assertion, which_environment_variables):
@@ -133,7 +135,7 @@ def test_method_error(mock_s3_get):
 @pytest.mark.parametrize(
     "which_lambda,expected_message,assertion",
     [(lambda_method_function,
-      "Input Error in",
+      "Error validating environment param",
       test_generic_library.method_assert),
      (lambda_wrangler_function,
       "Error validating environment param",
