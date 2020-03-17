@@ -113,7 +113,7 @@ def calculate_strata(row, value_column, region_column, strata_column, survey_col
     """
     row[strata_column] = ""
 
-    if not row[value_column]:
+    if row[value_column] is None:
         return row
 
     if row[strata_column] == "":
