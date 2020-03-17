@@ -226,8 +226,44 @@ def test_wrangler_success(mock_s3_get, mock_s3_put):
 
 
 def test_strata_mismatch_detector():
-    assert True
+    with open("tests/fixtures/test_method_output.json", "r") as file_1:
+        test_data_in = file_1.read()
+    method_data = pd.DataFrame(json.loads(test_data_in))
+
+    produced_data, anomalies = lambda_wrangler_function.strata_mismatch_detector(
+        method_data,
+        "201809", "period",
+        "responder_id", "strata",
+        "good_strata",
+        "current_period",
+        "previous_period",
+        "current_strata",
+        "previous_strata")
+
+    with open("tests/fixtures/test_wrangler_prepared_output.json", "r") as file_2:
+        test_data_out = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_out))
+
+    assert_frame_equal(produced_data, prepared_data)
 
 
 def test_calculate_strata():
-    assert True
+    with open("tests/fixtures/test_method_input.json", "r") as file_1:
+        file_data = file_1.read()
+    input_data = pd.DataFrame(json.loads(file_data))
+
+    produced_data = input_data.apply(
+        lambda_method_function.calculate_strata,
+        strata_column="strata",
+        value_column="Q608_total",
+        survey_column="survey",
+        region_column="region",
+        axis=1,
+    )
+    produced_data = produced_data.sort_index(axis=1)
+
+    with open("tests/fixtures/test_method_prepared_output.json", "r") as file_2:
+        file_data = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(file_data))
+
+    assert_frame_equal(produced_data, prepared_data)

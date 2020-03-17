@@ -117,7 +117,7 @@ def lambda_handler(event, context):
             "current_" + period_column,
             "previous_" + period_column,
             "current_" + segmentation,
-            "previous_" + segmentation,)
+            "previous_" + segmentation)
 
         logger.info("Successfully saved input data")
         # Push current period data onwards
