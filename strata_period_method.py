@@ -113,6 +113,8 @@ def calculate_strata(row, value_column, region_column, strata_column, survey_col
     """
     row[strata_column] = ""
 
+    # While Updating Tests I Couldn't Trigger This.
+    # But Raised Question Of Should This Sort Of Data Validation Be Elsewhere?
     if row[value_column] is None:
         return row
 
