@@ -4,8 +4,7 @@ import os
 
 import boto3
 import pandas as pd
-from botocore.exceptions import ClientError, IncompleteReadError
-from es_aws_functions import aws_functions, exception_classes
+from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
@@ -79,17 +78,22 @@ def lambda_handler(event, context):
 
         logger.info("Retrieved configuration variables.")
 
-        message_json, receipt_handle = aws_functions.get_data(sqs_queue_url,
-                                                              bucket_name,
-                                                              in_file_name,
-                                                              incoming_message_group_id,
-                                                              location)
+        data_df, receipt_handle = aws_functions.get_dataframe(
+            sqs_queue_url,
+            bucket_name,
+            in_file_name,
+            incoming_message_group_id,
+            location)
+        logger.info("Successfully retrieved data from s3")
 
-        logger.info("Successfully retrieved data from sqs")
-
-        json_payload = {"data": json.loads(message_json),
-                        "survey_column": survey_column,
-                        "region_column": region_column}
+        data_json = data_df.to_json(orient="records")
+        json_payload = {
+            "RuntimeVariables": {
+                "data": data_json,
+                "survey_column": survey_column,
+                "region_column": region_column
+            }
+        }
         returned_data = var_lambda.invoke(FunctionName=method_name,
                                           Payload=json.dumps(json_payload))
         logger.info("Successfully invoked method.")
@@ -112,7 +116,7 @@ def lambda_handler(event, context):
             "current_" + period_column,
             "previous_" + period_column,
             "current_" + segmentation,
-            "previous_" + segmentation,)
+            "previous_" + segmentation)
 
         logger.info("Successfully saved input data")
         # Push current period data onwards
@@ -137,79 +141,9 @@ def lambda_handler(event, context):
 
         logger.info("Successfully sent message to sns")
 
-    except AttributeError as e:
-        error_message = (
-                "Bad data encountered in "
-                + current_module
-                + " |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context.aws_request_id)
-                + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except ValueError as e:
-        error_message = (
-                "Parameter validation error in "
-                + current_module
-                + " |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context.aws_request_id)
-                + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except ClientError as e:
-        error_message = (
-                "AWS Error ("
-                + str(e.response["Error"]["Code"])
-                + ") "
-                + current_module
-                + " |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context.aws_request_id)
-                + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except KeyError as e:
-        error_message = (
-                "Key Error in "
-                + current_module
-                + " |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context.aws_request_id)
-                + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except IncompleteReadError as e:
-        error_message = (
-                "Incomplete Lambda response encountered in "
-                + current_module
-                + " |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context.aws_request_id)
-                + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except exception_classes.MethodFailure as e:
-        error_message = e.error_message
-        log_message = "Error in " + method_name + "." + " | Run_id: " + str(run_id)
     except Exception as e:
-        error_message = (
-                "General Error in "
-                + current_module
-                + " ("
-                + str(type(e))
-                + ") |- "
-                + str(e.args)
-                + " | Request ID: "
-                + str(context.aws_request_id)
-                + " | Run_id: " + str(run_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context)
     finally:
         if (len(error_message)) > 0:
             logger.error(log_message)

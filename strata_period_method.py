@@ -3,6 +3,7 @@ import os
 
 import marshmallow
 import pandas as pd
+from es_aws_functions import general_functions
 
 
 class EnvironSchema(marshmallow.Schema):
@@ -22,12 +23,15 @@ def lambda_handler(event, context):
     """
     current_module = "Strata - Method"
     error_message = ""
-    log_message = ""
     logger = logging.getLogger("Strata")
+    # Define run_id outside of try block
+    run_id = 0
     try:
 
         logger.info("Strata Method Begun")
-
+        # Retrieve run_id before input validation
+        # Because it is used in exception handling
+        run_id = event['RuntimeVariables']['run_id']
         schema = EnvironSchema()
         config, errors = schema.load(os.environ)
         if errors:
@@ -35,15 +39,16 @@ def lambda_handler(event, context):
 
         logger.info("Vaildated params")
 
-        input_data = pd.DataFrame(event["data"])
-        survey_column = event["survey_column"]
-        region_column = event["region_column"]
+        data = event['RuntimeVariables']["data"]
+        survey_column = event['RuntimeVariables']["survey_column"]
+        region_column = event['RuntimeVariables']["region_column"]
 
         logger.info("Succesfully retrieved data from event")
 
         strata_column = config["strata_column"]
         value_column = config["value_column"]
 
+        input_data = pd.read_json(data, dtype=False)
         post_strata = input_data.apply(
             calculate_strata,
             strata_column=strata_column,
@@ -57,41 +62,12 @@ def lambda_handler(event, context):
 
         final_output = {"data": json_out}
 
-    except ValueError as e:
-        error_message = (
-            "Input Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
-    except KeyError as e:
-        error_message = (
-            "Key Error in "
-            + current_module
-            + " |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
     except Exception as e:
-        error_message = (
-            "General Error in "
-            + current_module
-            + " ("
-            + str(type(e))
-            + ") |- "
-            + str(e.args)
-            + " | Request ID: "
-            + str(context.aws_request_id)
-        )
-        log_message = error_message + " | Line: " + str(e.__traceback__.tb_lineno)
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context)
     finally:
         if (len(error_message)) > 0:
-            logger.error(log_message)
+            logger.error(error_message)
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
@@ -112,6 +88,8 @@ def calculate_strata(row, value_column, region_column, strata_column, survey_col
     """
     row[strata_column] = ""
 
+    # While Updating Tests I Couldn't Trigger This.
+    # But Raised Question Of Should This Sort Of Data Validation Be Elsewhere?
     if row[value_column] is None:
         return row
 
