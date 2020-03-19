@@ -1,5 +1,5 @@
 # ES Strata
- This is the second module within the BMI Survey. It calculates the Strata based on the survey type(Land or Marine), total turnover and region.
+ This is the second module within the BMI Survey. It calculates the Strata based on the survey type(Land or Marine), total turnover and region.Mike
 
 ## Strata Wrangler
 The wrangler prepares the data from enrichment, to be processed to calculate the Strata for each reference.
