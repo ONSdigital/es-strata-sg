@@ -41,7 +41,6 @@ functions:
       checkpoint: 2
       bucket_name: spp-results-sandbox
       method_name: es-strata-method
-      sns_topic_arn: arn:aws:sns:eu-west-2:${self:custom.accountId}:BMIResults
       period_column: period
       segmentation: strata
       reference: responder_id

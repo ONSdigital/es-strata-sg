@@ -19,7 +19,6 @@ wrangler_environment_variables = {
     "period_column": "period",
     "segmentation": "strata",
     "reference": "responder_id",
-    "sns_topic_arn": "fake_sns_arn",
     "bucket_name": "test_bucket",
     "checkpoint": "999",
     "method_name": "strata_period_method"
@@ -46,6 +45,7 @@ wrangler_runtime_variables = {
             "out_file_name": "test_wrangler_output.json",
             "outgoing_message_group_id": "test_id",
             "period": "201809",
+            "sns_topic_arn": "fake_sns_arn",
             "distinct_values": ["region"]
         }
 }

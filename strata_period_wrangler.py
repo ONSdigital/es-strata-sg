@@ -19,7 +19,6 @@ class EnvironSchema(Schema):
     period_column = fields.Str(required=True)
     reference = fields.Str(required=True)
     segmentation = fields.Str(required=True)
-    sns_topic_arn = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -60,7 +59,6 @@ def lambda_handler(event, context):
         checkpoint = config['checkpoint']
         bucket_name = config['bucket_name']
         method_name = config['method_name']
-        sns_topic_arn = config['sns_topic_arn']
         period_column = config['period_column']
         segmentation = config['segmentation']
         reference = config['reference']
@@ -73,6 +71,7 @@ def lambda_handler(event, context):
         out_file_name = event['RuntimeVariables']['out_file_name']
         outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
         region_column = event['RuntimeVariables']['distinct_values'][0]
+        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
         sqs_queue_url = event['RuntimeVariables']["queue_url"]
         survey_column = event['RuntimeVariables']['survey_column']
 
