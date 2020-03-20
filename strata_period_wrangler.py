@@ -91,7 +91,8 @@ def lambda_handler(event, context):
             "RuntimeVariables": {
                 "data": data_json,
                 "survey_column": survey_column,
-                "region_column": region_column
+                "region_column": region_column,
+                "run_id": run_id
             }
         }
         returned_data = var_lambda.invoke(FunctionName=method_name,
