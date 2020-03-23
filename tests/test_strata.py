@@ -105,18 +105,17 @@ def test_incomplete_read_error(mock_s3_get):
 
 
 @pytest.mark.parametrize(
-    "which_lambda,expected_message,assertion,which_environment_variables",
+    "which_lambda,which_environment_variables,expected_message,assertion",
     [
         (lambda_method_function, method_environment_variables,
          "KeyError", test_generic_library.method_assert),
         (lambda_wrangler_function, wrangler_environment_variables,
          "KeyError", test_generic_library.wrangler_assert)
     ])
-def test_key_error(which_lambda, expected_message,
-                   assertion, which_environment_variables):
-    test_generic_library.key_error(which_lambda,
-                                   expected_message, assertion,
-                                   which_environment_variables)
+def test_key_error(which_lambda, which_environment_variables,
+                   expected_message, assertion):
+    test_generic_library.key_error(which_lambda, which_environment_variables,
+                                   expected_message, assertion)
 
 
 @mock_s3
