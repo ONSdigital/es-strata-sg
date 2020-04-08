@@ -3,7 +3,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-from es_aws_functions import test_generic_library, exception_classes
+from es_aws_functions import exception_classes, test_generic_library
 from moto import mock_s3
 from pandas.util.testing import assert_frame_equal
 
@@ -258,7 +258,7 @@ def test_wrangler_success_passed(mock_s3_get):
             # This stops the Error caused by the replacement function from stopping
             # the test.
             with pytest.raises(exception_classes.LambdaFailure):
-                output = lambda_wrangler_function.lambda_handler(
+                lambda_wrangler_function.lambda_handler(
                     wrangler_runtime_variables, test_generic_library.context_object
                 )
 
