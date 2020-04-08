@@ -265,12 +265,10 @@ def test_wrangler_success_passed(mock_s3_get):
     with open("tests/fixtures/test_method_input.json", "r") as file_2:
         test_data_prepared = file_2.read()
     prepared_data = pd.DataFrame(json.loads(test_data_prepared))
-    prepared_data = prepared_data.sort_index(axis=1)
 
     with open("tests/fixtures/test_wrangler_to_method_input.json", "r") as file_3:
         test_data_produced = file_3.read()
     produced_data = pd.DataFrame(json.loads(test_data_produced))
-    produced_data = produced_data.sort_index(axis=1)
 
     # Compares the data.
     assert_frame_equal(produced_data, prepared_data)
