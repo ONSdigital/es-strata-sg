@@ -12,7 +12,6 @@
         "county_name": "TAYSIDE & FIFE",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "076",
         "marine": "y",
         "name": "NotMike",
         "period": 201809,
@@ -20,7 +19,7 @@
         "region_name": "Scotland",
         "responder_id": 49910391669,
         "response_type": 1,
-        "strata": "M"
+        "survey": "076"
     },
     {
         "Q601_asphalting_sand": 0,
@@ -35,7 +34,6 @@
         "county_name": "TAYSIDE & FIFE",
         "enterprise_ref": 6,
         "gor_code": "AA",
-        "survey": "066",
         "marine": "n",
         "name": "Mike",
         "period": 201809,
@@ -43,7 +41,7 @@
         "region_name": "Scotland",
         "responder_id": 49910391670,
         "response_type": 2,
-        "strata": "C"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 0,
@@ -58,7 +56,6 @@
         "county_name": "TAYSIDE & FIFE",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "066",
         "marine": "n",
         "name": "NotMike",
         "period": 201809,
@@ -66,7 +63,7 @@
         "region_name": "Scotland",
         "responder_id": 49910391671,
         "response_type": 2,
-        "strata": "E"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 0,
@@ -81,7 +78,6 @@
         "county_name": "GREATER MANCHESTER",
         "enterprise_ref": 6,
         "gor_code": "AA",
-        "survey": "066",
         "marine": "n",
         "name": "Mike",
         "period": 201809,
@@ -89,7 +85,7 @@
         "region_name": "North West",
         "responder_id": 49910391672,
         "response_type": 1,
-        "strata": "E"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 1,
@@ -104,7 +100,6 @@
         "county_name": "ISLE OF WIGHT",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "066",
         "marine": "n",
         "name": "NotMike",
         "period": 201809,
@@ -112,7 +107,7 @@
         "region_name": "South East",
         "responder_id": 49910391673,
         "response_type": 2,
-        "strata": "B2"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 1,
@@ -127,7 +122,6 @@
         "county_name": "ISLE OF WIGHT",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "066",
         "marine": "n",
         "name": "NotMike",
         "period": 201809,
@@ -135,7 +129,7 @@
         "region_name": "South East",
         "responder_id": 49910391673,
         "response_type": 2,
-        "strata": "D"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 1,
@@ -150,7 +144,6 @@
         "county_name": "ISLE OF WIGHT",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "066",
         "marine": "n",
         "name": "NotMike",
         "period": 201809,
@@ -158,7 +151,7 @@
         "region_name": "South East",
         "responder_id": 49910391673,
         "response_type": 2,
-        "strata": "E"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 1,
@@ -173,7 +166,6 @@
         "county_name": "ISLE OF WIGHT",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "066",
         "marine": "n",
         "name": "NotMike",
         "period": 201809,
@@ -181,7 +173,7 @@
         "region_name": "South East",
         "responder_id": 49910391673,
         "response_type": 2,
-        "strata": "B1"
+        "survey": "066"
     },
     {
         "Q601_asphalting_sand": 1,
@@ -196,7 +188,6 @@
         "county_name": "ISLE OF WIGHT",
         "enterprise_ref": 7,
         "gor_code": "KJ",
-        "survey": "066",
         "marine": "n",
         "name": "NotMike",
         "period": 201809,
@@ -204,6 +195,6 @@
         "region_name": "South East",
         "responder_id": 49910391673,
         "response_type": 2,
-        "strata": "A"
+        "survey": "066"
     }
 ]

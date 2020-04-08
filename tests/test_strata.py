@@ -3,7 +3,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-from es_aws_functions import test_generic_library
+from es_aws_functions import test_generic_library, exception_classes
 from moto import mock_s3
 from pandas.util.testing import assert_frame_equal
 
@@ -207,7 +207,7 @@ def test_strata_mismatch_detector():
     :param None
     :return Test Pass/Fail
     """
-    with open("tests/fixtures/test_method_output.json", "r") as file_1:
+    with open("tests/fixtures/test_method_prepared_output.json", "r") as file_1:
         test_data_in = file_1.read()
     method_data = pd.DataFrame(json.loads(test_data_in))
 
@@ -231,9 +231,65 @@ def test_strata_mismatch_detector():
 @mock_s3
 @mock.patch('strata_period_wrangler.aws_functions.get_dataframe',
             side_effect=test_generic_library.replacement_get_dataframe)
+def test_wrangler_success_passed(mock_s3_get):
+    """
+    Runs the wrangler function.
+    :param mock_s3_get - Replacement Function For The Data Retrieval AWS Functionality.
+    :return Test Pass/Fail
+    """
+    bucket_name = wrangler_environment_variables["bucket_name"]
+    client = test_generic_library.create_bucket(bucket_name)
+
+    file_list = ["test_wrangler_input.json"]
+
+    test_generic_library.upload_files(client, bucket_name, file_list)
+
+    with mock.patch.dict(lambda_wrangler_function.os.environ,
+                         wrangler_environment_variables):
+        with mock.patch("strata_period_wrangler.boto3.client") as mock_client:
+            mock_client_object = mock.Mock()
+            mock_client.return_value = mock_client_object
+
+            # Rather than mock the get/decode we tell the code that when the invoke is
+            # called pass the variables to this replacement function instead.
+            mock_client_object.invoke.side_effect =\
+                test_generic_library.replacement_invoke
+
+            # This stops the Error caused by the replacement function from stopping
+            # the test.
+            with pytest.raises(exception_classes.LambdaFailure):
+                output = lambda_wrangler_function.lambda_handler(
+                    wrangler_runtime_variables, test_generic_library.context_object
+                )
+
+    with open("tests/fixtures/test_method_input.json", "r") as file_2:
+        test_data_prepared = file_2.read()
+    prepared_data = pd.DataFrame(json.loads(test_data_prepared))
+    prepared_data = prepared_data.sort_index(axis=1)
+
+    with open("tests/fixtures/test_wrangler_to_method_input.json", "r") as file_3:
+        test_data_produced = file_3.read()
+    produced_data = pd.DataFrame(json.loads(test_data_produced))
+    produced_data = produced_data.sort_index(axis=1)
+
+    # Compares the data.
+    assert_frame_equal(produced_data, prepared_data)
+
+    with open("tests/fixtures/test_wrangler_to_method_runtime.json", "r") as file_4:
+        test_dict_prepared = file_4.read()
+    produced_dict = json.loads(test_dict_prepared)
+
+    # Ensures data is not in the RuntimeVariables and then compares.
+    method_runtime_variables["RuntimeVariables"]["data"] = None
+    assert produced_dict == method_runtime_variables["RuntimeVariables"]
+
+
+@mock_s3
+@mock.patch('strata_period_wrangler.aws_functions.get_dataframe',
+            side_effect=test_generic_library.replacement_get_dataframe)
 @mock.patch('strata_period_wrangler.aws_functions.save_data',
             side_effect=test_generic_library.replacement_save_data)
-def test_wrangler_success(mock_s3_get, mock_s3_put):
+def test_wrangler_success_returned(mock_s3_get, mock_s3_put):
     """
     Runs the wrangler function.
     :param mock_s3_get - Replacement Function For The Data Retrieval AWS Functionality.
@@ -247,7 +303,7 @@ def test_wrangler_success(mock_s3_get, mock_s3_put):
 
     test_generic_library.upload_files(client, bucket_name, file_list)
 
-    with open("tests/fixtures/test_method_output.json", "r") as file_2:
+    with open("tests/fixtures/test_method_prepared_output.json", "r") as file_2:
         test_data_out = file_2.read()
 
     with mock.patch.dict(lambda_wrangler_function.os.environ,
