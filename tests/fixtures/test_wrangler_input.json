@@ -196,27 +196,5 @@
         "marine": "n",
         "region": 9,
         "region_name": "South East"
-    },
-    {
-        "Q601_asphalting_sand": null,
-        "Q602_building_soft_sand": null,
-        "Q603_concreting_sand": null,
-        "Q604_bituminous_gravel": null,
-        "Q605_concreting_gravel": null,
-        "Q606_other_gravel": null,
-        "Q607_constructional_fill": null,
-        "Q608_total": null,
-        "enterprise_ref": 9,
-        "gor_code": "KJ",
-        "survey": "066",
-        "name": "NotMike",
-        "period": 201809,
-        "responder_id": 49910391673,
-        "response_type": 2,
-        "county": 29,
-        "county_name": "ISLE OF WIGHT",
-        "marine": "n",
-        "region": 9,
-        "region_name": "South East"
     }
 ]
