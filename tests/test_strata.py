@@ -132,16 +132,24 @@ def test_method_error(mock_s3_get):
 
 
 @pytest.mark.parametrize(
-    "which_lambda,expected_message,assertion",
+    "which_lambda,expected_message,assertion,which_environment_variables",
     [(lambda_method_function,
       "Error validating environment param",
-      test_generic_library.method_assert),
+      test_generic_library.method_assert, {}),
+     (lambda_method_function,
+      "Error validating runtime param",
+      test_generic_library.method_assert, method_environment_variables),
      (lambda_wrangler_function,
       "Error validating environment param",
-      test_generic_library.wrangler_assert)])
-def test_value_error(which_lambda, expected_message, assertion):
+      test_generic_library.wrangler_assert, {}),
+     (lambda_wrangler_function,
+      "Error validating runtime param",
+      test_generic_library.wrangler_assert, wrangler_environment_variables)])
+def test_value_error(which_lambda, expected_message,
+                     assertion, which_environment_variables):
     test_generic_library.value_error(
-        which_lambda, expected_message, assertion)
+        which_lambda, expected_message, assertion,
+        environment_variables=which_environment_variables)
 
 ##########################################################################################
 #                                     Specific                                           #
