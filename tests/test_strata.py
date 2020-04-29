@@ -76,10 +76,10 @@ def test_client_error(which_lambda, which_runtime_variables,
     "expected_message,assertion",
     [
         (lambda_method_function, method_runtime_variables,
-         method_environment_variables, "strata_period_method.EnvironSchema",
+         method_environment_variables, "strata_period_method.EnvironmentSchema",
          "'Exception'", test_generic_library.method_assert),
         (lambda_wrangler_function, wrangler_runtime_variables,
-         wrangler_environment_variables, "strata_period_wrangler.EnvironSchema",
+         wrangler_environment_variables, "strata_period_wrangler.EnvironmentSchema",
          "'Exception", test_generic_library.wrangler_assert)
     ])
 def test_general_error(which_lambda, which_runtime_variables,

@@ -8,17 +8,26 @@ from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import Schema, fields
 
 
-class EnvironSchema(Schema):
-    """
-    Class to setup the environment variables schema.
-    """
-
+class EnvironmentSchema(Schema):
     bucket_name = fields.Str(required=True)
     checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     period_column = fields.Str(required=True)
     reference = fields.Str(required=True)
     segmentation = fields.Str(required=True)
+
+
+class RuntimeSchema(Schema):
+    period = fields.Str(required=True)
+    in_file_name = fields.Str(required=True)
+    incoming_message_group_id = fields.Str(required=True)
+    location = fields.Str(required=True)
+    out_file_name = fields.Str(required=True)
+    outgoing_message_group_id = fields.Str(required=True)
+    distinct_values = fields.List(required=True)
+    sns_topic_arn = fields.Str(required=True)
+    queue_url = fields.Str(required=True)
+    survey_column = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -44,36 +53,41 @@ def lambda_handler(event, context):
         logger.info("Strata Wrangler Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
+        run_id = event["RuntimeVariables"]["run_id"]
         # Set up clients
         var_lambda = boto3.client("lambda", region_name="eu-west-2")
 
-        schema = EnvironSchema()
-        config, errors = schema.load(os.environ)
+        environment_variables, errors = EnvironmentSchema().load(os.environ)
         if errors:
-            raise ValueError(f"Error validating environment parameters: {errors}")
+            logger.error(f"Error validating environment params: {errors}")
+            raise ValueError(f"Error validating environment params: {errors}")
 
-        logger.info("Validated params")
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
+
+        logger.info("Validated parameters.")
 
         # Environment Variables
-        checkpoint = config['checkpoint']
-        bucket_name = config['bucket_name']
-        method_name = config['method_name']
-        period_column = config['period_column']
-        segmentation = config['segmentation']
-        reference = config['reference']
+        checkpoint = environment_variables["checkpoint"]
+        bucket_name = environment_variables["bucket_name"]
+        method_name = environment_variables["method_name"]
+        period_column = environment_variables["period_column"]
+        segmentation = environment_variables["segmentation"]
+        reference = environment_variables["reference"]
 
         # Runtime Variables
-        current_period = event['RuntimeVariables']['period']
-        in_file_name = event['RuntimeVariables']['in_file_name']
-        incoming_message_group_id = event['RuntimeVariables']['incoming_message_group_id']
-        location = event['RuntimeVariables']['location']
-        out_file_name = event['RuntimeVariables']['out_file_name']
-        outgoing_message_group_id = event['RuntimeVariables']["outgoing_message_group_id"]
-        region_column = event['RuntimeVariables']['distinct_values'][0]
-        sns_topic_arn = event['RuntimeVariables']['sns_topic_arn']
-        sqs_queue_url = event['RuntimeVariables']["queue_url"]
-        survey_column = event['RuntimeVariables']['survey_column']
+        current_period = runtime_variables["period"]
+        in_file_name = runtime_variables["in_file_name"]
+        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
+        location = runtime_variables["location"]
+        out_file_name = runtime_variables["out_file_name"]
+        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
+        region_column = runtime_variables["distinct_values"][0]
+        sns_topic_arn = runtime_variables["sns_topic_arn"]
+        sqs_queue_url = runtime_variables["queue_url"]
+        survey_column = runtime_variables["survey_column"]
 
         logger.info("Retrieved configuration variables.")
 
@@ -101,11 +115,11 @@ def lambda_handler(event, context):
         json_response = json.loads(returned_data.get("Payload").read().decode("UTF-8"))
         logger.info("JSON extracted from method response.")
 
-        if not json_response['success']:
-            raise exception_classes.MethodFailure(json_response['error'])
+        if not json_response["success"]:
+            raise exception_classes.MethodFailure(json_response["error"])
 
         # Turn json back into dataframe
-        output_dataframe = pd.read_json(json_response['data'], dtype=False)
+        output_dataframe = pd.read_json(json_response["data"], dtype=False)
 
         # Perform mismatch detection
         output_dataframe, anomalies = strata_mismatch_detector(
@@ -121,7 +135,7 @@ def lambda_handler(event, context):
         logger.info("Successfully saved input data")
         # Push current period data onwards
         aws_functions.save_data(bucket_name, out_file_name,
-                                output_dataframe.to_json(orient='records'),
+                                output_dataframe.to_json(orient="records"),
                                 sqs_queue_url, outgoing_message_group_id, location)
 
         logger.info("Successfully sent data to s3")
@@ -135,7 +149,7 @@ def lambda_handler(event, context):
 
         aws_functions.\
             send_sns_message_with_anomalies(checkpoint,
-                                            anomalies.to_json(orient='records'),
+                                            anomalies.to_json(orient="records"),
                                             sns_topic_arn,
                                             "Strata.")
 
@@ -163,7 +177,7 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
     different between periods.
     :param data: The DataFrame the miss-match detection will be performed on.
     :param current_period: The current period of the run.
-    :param time: Field name which is used as a gauge of time'. Added for IAC config.
+    :param time: Field name which is used as a gauge of time'. Added for IAC environment_variables.
     :param reference: Field name which is used as a reference for IAC.
     :param segmentation: Field name of the segmentation used for IAC.
     :param stored_segmentation: Field name of stored segmentation for IAC.
@@ -187,14 +201,14 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
 
         # Now merge these so that the fix_data strata is
         # added as an extra column to the input data
-        data = pd.merge(data, fix_data, on=reference, how='left')
+        data = pd.merge(data, fix_data, on=reference, how="left")
 
         # We should now have a good Strata column in the dataframe - mostly containing
         # null values, containing strata where there was anomoly using an apply method,
         # set strata to be the goodstrata.
         data[segmentation] = data.apply(
             lambda x: x[stored_segmentation]
-            if str(x[stored_segmentation]) != 'nan' else x[segmentation], axis=1)
+            if str(x[stored_segmentation]) != "nan" else x[segmentation], axis=1)
         data = data.drop(stored_segmentation, axis=1)
 
         # Split on period then merge together so they're same row.
