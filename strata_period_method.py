@@ -6,12 +6,15 @@ import pandas as pd
 from es_aws_functions import general_functions
 
 
-class EnvironSchema(marshmallow.Schema):
-    """
-    Class to set up the environment variables schema.
-    """
+class EnvironmentSchema(marshmallow.Schema):
     strata_column = marshmallow.fields.Str(required=True)
     value_column = marshmallow.fields.Str(required=True)
+
+
+class RuntimeSchema(marshmallow.Schema):
+    data = marshmallow.fields.Str(required=True)
+    region_column = marshmallow.fields.Str(required=True)
+    survey_column = marshmallow.fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -31,22 +34,30 @@ def lambda_handler(event, context):
         logger.info("Strata Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
-        run_id = event['RuntimeVariables']['run_id']
-        schema = EnvironSchema()
-        config, errors = schema.load(os.environ)
+        run_id = event["RuntimeVariables"]["run_id"]
+
+        environment_variables, errors = EnvironmentSchema().load(os.environ)
         if errors:
-            raise ValueError(f"Error validating environment parameters: {errors}")
+            logger.error(f"Error validating environment params: {errors}")
+            raise ValueError(f"Error validating environment params: {errors}")
 
-        logger.info("Vaildated params")
+        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
+        if errors:
+            logger.error(f"Error validating runtime params: {errors}")
+            raise ValueError(f"Error validating runtime params: {errors}")
 
-        data = event['RuntimeVariables']["data"]
-        survey_column = event['RuntimeVariables']["survey_column"]
-        region_column = event['RuntimeVariables']["region_column"]
+        logger.info("Validated parameters.")
 
-        logger.info("Succesfully retrieved data from event")
+        # Environment Variables
+        strata_column = environment_variables["strata_column"]
+        value_column = environment_variables["value_column"]
 
-        strata_column = config["strata_column"]
-        value_column = config["value_column"]
+        # Runtime Variables
+        data = runtime_variables["data"]
+        survey_column = runtime_variables["survey_column"]
+        region_column = runtime_variables["region_column"]
+
+        logger.info("Retrieved configuration variables.")
 
         input_data = pd.read_json(data, dtype=False)
         post_strata = input_data.apply(
@@ -71,7 +82,7 @@ def lambda_handler(event, context):
             return {"success": False, "error": error_message}
 
     logger.info("Successfully completed module: " + current_module)
-    final_output['success'] = True
+    final_output["success"] = True
     return final_output
 
 
