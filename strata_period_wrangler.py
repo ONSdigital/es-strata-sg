@@ -177,7 +177,7 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
     different between periods.
     :param data: The DataFrame the miss-match detection will be performed on.
     :param current_period: The current period of the run.
-    :param time: Field name which is used as a gauge of time'. Added for IAC environment_variables.
+    :param time: Field name which is used as a gauge of time'. Added for IAC config.
     :param reference: Field name which is used as a reference for IAC.
     :param segmentation: Field name of the segmentation used for IAC.
     :param stored_segmentation: Field name of stored segmentation for IAC.
