@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 from es_aws_functions import general_functions
-from marshmallow import EXCLUDE, INCLUDE, Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class EnvironmentSchema(Schema):
@@ -20,7 +20,7 @@ class EnvironmentSchema(Schema):
 
 class RuntimeSchema(Schema):
     class Meta:
-        unknown = INCLUDE
+        unknown = EXCLUDE
 
     def handle_error(self, e, data, **kwargs):
         logging.error(f"Error validating runtime params: {e}")
