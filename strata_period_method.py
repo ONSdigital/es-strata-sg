@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 from es_aws_functions import general_functions
-from marshmallow import Schema, fields, EXCLUDE
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class EnvironmentSchema(Schema):
