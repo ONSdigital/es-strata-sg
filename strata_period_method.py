@@ -1,20 +1,34 @@
 import logging
 import os
 
-import marshmallow
 import pandas as pd
 from es_aws_functions import general_functions
+from marshmallow import EXCLUDE, Schema, fields
 
 
-class EnvironmentSchema(marshmallow.Schema):
-    strata_column = marshmallow.fields.Str(required=True)
-    value_column = marshmallow.fields.Str(required=True)
+class EnvironmentSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        logging.error(f"Error validating environment params: {e}")
+        raise ValueError(f"Error validating environment params: {e}")
+
+    strata_column = fields.Str(required=True)
+    value_column = fields.Str(required=True)
 
 
-class RuntimeSchema(marshmallow.Schema):
-    data = marshmallow.fields.Str(required=True)
-    region_column = marshmallow.fields.Str(required=True)
-    survey_column = marshmallow.fields.Str(required=True)
+class RuntimeSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    def handle_error(self, e, data, **kwargs):
+        logging.error(f"Error validating runtime params: {e}")
+        raise ValueError(f"Error validating runtime params: {e}")
+
+    data = fields.Str(required=True)
+    region_column = fields.Str(required=True)
+    survey_column = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -36,15 +50,9 @@ def lambda_handler(event, context):
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
 
-        environment_variables, errors = EnvironmentSchema().load(os.environ)
-        if errors:
-            logger.error(f"Error validating environment params: {errors}")
-            raise ValueError(f"Error validating environment params: {errors}")
+        environment_variables = EnvironmentSchema().load(os.environ)
 
-        runtime_variables, errors = RuntimeSchema().load(event["RuntimeVariables"])
-        if errors:
-            logger.error(f"Error validating runtime params: {errors}")
-            raise ValueError(f"Error validating runtime params: {errors}")
+        runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
         logger.info("Validated parameters.")
 
