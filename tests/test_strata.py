@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from es_aws_functions import exception_classes, test_generic_library
 from moto import mock_s3
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 
 import strata_period_method as lambda_method_function
 import strata_period_wrangler as lambda_wrangler_function
@@ -172,13 +172,13 @@ def test_calculate_strata():
         value_column="Q608_total",
         survey_column="survey",
         region_column="region",
-        axis=1,
+        axis=1
     )
     produced_data = produced_data.sort_index(axis=1)
 
     with open("tests/fixtures/test_method_prepared_output.json", "r") as file_2:
         file_data = file_2.read()
-    prepared_data = pd.DataFrame(json.loads(file_data))
+    prepared_data = pd.DataFrame(json.loads(file_data)).sort_index(axis=1)
 
     assert_frame_equal(produced_data, prepared_data)
 
@@ -194,7 +194,7 @@ def test_method_success():
                          method_environment_variables):
         with open("tests/fixtures/test_method_prepared_output.json", "r") as file_1:
             file_data = file_1.read()
-        prepared_data = pd.DataFrame(json.loads(file_data))
+        prepared_data = pd.DataFrame(json.loads(file_data)).sort_index(axis=1)
 
         with open("tests/fixtures/test_method_input.json", "r") as file_2:
             test_data = file_2.read()
@@ -203,7 +203,7 @@ def test_method_success():
         output = lambda_method_function.lambda_handler(
             method_runtime_variables, test_generic_library.context_object)
 
-        produced_data = pd.DataFrame(json.loads(output["data"]))
+        produced_data = pd.DataFrame(json.loads(output["data"])).sort_index(axis=1)
 
     assert output["success"]
     assert_frame_equal(produced_data, prepared_data)
@@ -228,6 +228,7 @@ def test_strata_mismatch_detector():
         "previous_period",
         "current_strata",
         "previous_strata")
+    produced_data = produced_data.sort_index(axis=1)
 
     with open("tests/fixtures/test_wrangler_prepared_output.json", "r") as file_2:
         test_data_out = file_2.read()
@@ -337,7 +338,7 @@ def test_wrangler_success_returned(mock_s3_get, mock_s3_put):
               wrangler_runtime_variables["RuntimeVariables"]["out_file_name"],
               "r") as file_4:
         test_data_produced = file_4.read()
-    produced_data = pd.DataFrame(json.loads(test_data_produced))
+    produced_data = pd.DataFrame(json.loads(test_data_produced)).sort_index(axis=1)
 
     assert output
     assert_frame_equal(produced_data, prepared_data)
