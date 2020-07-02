@@ -34,13 +34,9 @@ class RuntimeSchema(Schema):
 
     period = fields.Str(required=True)
     in_file_name = fields.Str(required=True)
-    incoming_message_group_id = fields.Str(required=True)
-    location = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    outgoing_message_group_id = fields.Str(required=True)
     distinct_values = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
-    queue_url = fields.Str(required=True)
     survey_column = fields.Str(required=True)
 
 
@@ -88,23 +84,14 @@ def lambda_handler(event, context):
         # Runtime Variables
         current_period = runtime_variables["period"]
         in_file_name = runtime_variables["in_file_name"]
-        incoming_message_group_id = runtime_variables["incoming_message_group_id"]
-        location = runtime_variables["location"]
         out_file_name = runtime_variables["out_file_name"]
-        outgoing_message_group_id = runtime_variables["outgoing_message_group_id"]
         region_column = runtime_variables["distinct_values"][0]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
-        sqs_queue_url = runtime_variables["queue_url"]
         survey_column = runtime_variables["survey_column"]
 
         logger.info("Retrieved configuration variables.")
 
-        data_df, receipt_handle = aws_functions.get_dataframe(
-            sqs_queue_url,
-            bucket_name,
-            in_file_name,
-            incoming_message_group_id,
-            location)
+        data_df = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
         logger.info("Successfully retrieved data from s3")
 
         data_json = data_df.to_json(orient="records")
@@ -142,18 +129,10 @@ def lambda_handler(event, context):
 
         logger.info("Successfully saved input data")
         # Push current period data onwards
-        aws_functions.save_data(bucket_name, out_file_name,
-                                output_dataframe.to_json(orient="records"),
-                                sqs_queue_url, outgoing_message_group_id, location)
+        aws_functions.save_to_s3(bucket_name, out_file_name,
+                                 output_dataframe.to_json(orient="records"))
 
         logger.info("Successfully sent data to s3")
-
-        sqs = boto3.client("sqs", region_name="eu-west-2")
-
-        if receipt_handle:
-            sqs.delete_message(QueueUrl=sqs_queue_url, ReceiptHandle=receipt_handle)
-
-        logger.info("Successfully deleted input data from s3")
 
         aws_functions.\
             send_sns_message_with_anomalies(checkpoint,
