@@ -1,6 +1,6 @@
 {
     "data": null,
-    "survey_column": "survey",
     "region_column": "region",
-    "run_id": "bob"
+    "run_id": "bob",
+    "survey_column": "survey"
 }
