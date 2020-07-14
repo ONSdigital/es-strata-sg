@@ -3,7 +3,7 @@
 
 ## Strata Wrangler
 The wrangler prepares the data from enrichment, to be processed to calculate the Strata for each reference.
-The wrangler calls the Strata method to then pass the data onto the SQS queue.
+The wrangler calls the Strata method to pick up data from the s3 bucket and save new data there at the end.
 
 ## Strata Method
 Name of Lambda: strata_period_method
