@@ -324,7 +324,7 @@ def test_wrangler_success_returned(mock_s3_put):
               wrangler_runtime_variables["RuntimeVariables"]["out_file_name"],
               "r") as file_4:
         test_data_produced = file_4.read()
-    produced_data = pd.DataFrame(json.loads(test_data_produced)).sort_index(axis=1)
+    produced_data = pd.DataFrame(json.loads(test_data_produced))
 
     assert output
     assert_frame_equal(produced_data, prepared_data)
