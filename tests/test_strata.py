@@ -20,7 +20,6 @@ wrangler_environment_variables = {
     "segmentation": "strata",
     "reference": "responder_id",
     "bucket_name": "test_bucket",
-    "checkpoint": "999",
     "method_name": "strata_period_method"
 }
 

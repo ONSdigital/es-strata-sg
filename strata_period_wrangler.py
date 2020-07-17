@@ -17,7 +17,6 @@ class EnvironmentSchema(Schema):
         raise ValueError(f"Error validating environment params: {e}")
 
     bucket_name = fields.Str(required=True)
-    checkpoint = fields.Str(required=True)
     method_name = fields.Str(required=True)
     period_column = fields.Str(required=True)
     reference = fields.Str(required=True)
@@ -74,7 +73,6 @@ def lambda_handler(event, context):
         logger.info("Validated parameters.")
 
         # Environment Variables
-        checkpoint = environment_variables["checkpoint"]
         bucket_name = environment_variables["bucket_name"]
         method_name = environment_variables["method_name"]
         period_column = environment_variables["period_column"]
@@ -135,8 +133,7 @@ def lambda_handler(event, context):
         logger.info("Successfully sent data to s3")
 
         aws_functions.\
-            send_sns_message_with_anomalies(checkpoint,
-                                            anomalies.to_json(orient="records"),
+            send_sns_message_with_anomalies(anomalies.to_json(orient="records"),
                                             sns_topic_arn,
                                             "Strata.")
 
@@ -151,7 +148,7 @@ def lambda_handler(event, context):
             raise exception_classes.LambdaFailure(error_message)
 
     logger.info("Successfully completed module: " + current_module)
-    return {"success": True, "checkpoint": checkpoint}
+    return {"success": True}
 
 
 def strata_mismatch_detector(data, current_period, time, reference, segmentation,
@@ -172,8 +169,7 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
     :param previous_time: Field name of the previous time used for IAC.
     :param current_segmentation: Field name of the current segmentation used for IAC.
     :param previous_segmentation: Field name of the current segmentation used for IAC.
-    :return: Success & Error on Fail or Success, Checkpoint, Impute and distinct_values
-             Type: JSON
+    :return: Success & Error on Fail or Success, Impute and distinct_values Type: JSON
     """
     data_anomalies = data[[reference, segmentation, time]]
 
