@@ -129,13 +129,18 @@ def lambda_handler(event, context):
         # Push current period data onwards
         aws_functions.save_to_s3(bucket_name, out_file_name,
                                  output_dataframe.to_json(orient="records"))
-
         logger.info("Successfully sent data to s3")
 
-        aws_functions.\
-            send_sns_message_with_anomalies(anomalies.to_json(orient="records"),
-                                            sns_topic_arn,
-                                            "Strata.")
+        anomalies = anomalies.to_json(orient="records")
+
+        if anomalies != "[]":
+            aws_functions.save_to_s3(bucket_name, "Strata_Anomalies", anomalies)
+            have_anomalies = True
+        else:
+            have_anomalies = False
+
+        aws_functions.send_sns_message_with_anomalies(have_anomalies, sns_topic_arn,
+                                                      "Strata.")
 
         logger.info("Successfully sent message to sns")
 
