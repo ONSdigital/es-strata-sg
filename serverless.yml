@@ -38,7 +38,6 @@ functions:
     tags:
       app: results
     environment:
-      checkpoint: 2
       bucket_name: spp-results-${self:custom.environment}
       method_name: es-strata-method
       period_column: period
