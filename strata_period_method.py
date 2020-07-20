@@ -166,17 +166,17 @@ def strata_mismatch_detector(data, current_period, time, reference, segmentation
     Looks only at id and strata columns. Then drops any duplicated rows (keep=false means
     that if there is a dupe it'll drop both). If there are any rows in this DataFrame it
     shows that the reference-strata combination was unique, and therefore the strata is
-    different between periods.
+    different between periods. (CAC = Config As Code)
     :param data: The DataFrame the miss-match detection will be performed on.
     :param current_period: The current period of the run.
-    :param time: Field name which is used as a gauge of time'. Added for IAC config.
-    :param reference: Field name which is used as a reference for IAC.
-    :param segmentation: Field name of the segmentation used for IAC.
-    :param stored_segmentation: Field name of stored segmentation for IAC.
-    :param current_time: Field name of the current time used for IAC.
-    :param previous_time: Field name of the previous time used for IAC.
-    :param current_segmentation: Field name of the current segmentation used for IAC.
-    :param previous_segmentation: Field name of the current segmentation used for IAC.
+    :param time: Field name which is used as a gauge of time'. Added for CAC.
+    :param reference: Field name which is used as a reference for CAC.
+    :param segmentation: Field name of the segmentation used for CAC.
+    :param stored_segmentation: Field name of stored segmentation for CAC.
+    :param current_time: Field name of the current time used for CAC.
+    :param previous_time: Field name of the previous time used for CAC.
+    :param current_segmentation: Field name of the current segmentation used for CAC.
+    :param previous_segmentation: Field name of the current segmentation used for CAC.
     :return: Success & Error on Fail or Success, Impute and distinct_values Type: JSON
     """
     data_anomalies = data[[reference, segmentation, time]]
