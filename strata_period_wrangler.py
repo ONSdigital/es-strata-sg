@@ -115,8 +115,7 @@ def lambda_handler(event, context):
             raise exception_classes.MethodFailure(json_response["error"])
 
         # Push current period data onwards
-        aws_functions.save_to_s3(bucket_name, out_file_name,
-                                 json_response["data"])
+        aws_functions.save_to_s3(bucket_name, out_file_name, json_response["data"])
         logger.info("Successfully sent data to s3")
 
         anomalies = json_response["anomalies"]
