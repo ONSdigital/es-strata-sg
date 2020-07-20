@@ -1,6 +1,10 @@
 {
+    "current_period": "201809",
     "data": null,
+    "period_column": "period",
+    "reference": "responder_id",
     "region_column": "region",
     "run_id": "bob",
+    "segmentation": "strata",
     "survey_column": "survey"
 }

@@ -3,7 +3,6 @@ import logging
 import os
 
 import boto3
-import pandas as pd
 from es_aws_functions import aws_functions, exception_classes, general_functions
 from marshmallow import EXCLUDE, Schema, fields
 
@@ -96,7 +95,11 @@ def lambda_handler(event, context):
         json_payload = {
             "RuntimeVariables": {
                 "data": data_json,
+                "current_period": current_period,
+                "period_column": period_column,
+                "segmentation": segmentation,
                 "survey_column": survey_column,
+                "reference": reference,
                 "region_column": region_column,
                 "run_id": run_id
             }
@@ -111,33 +114,19 @@ def lambda_handler(event, context):
         if not json_response["success"]:
             raise exception_classes.MethodFailure(json_response["error"])
 
-        # Turn json back into dataframe
-        output_dataframe = pd.read_json(json_response["data"], dtype=False)
-
-        # Perform mismatch detection
-        output_dataframe, anomalies = strata_mismatch_detector(
-            output_dataframe,
-            current_period, period_column,
-            reference, segmentation,
-            "good_" + segmentation,
-            "current_" + period_column,
-            "previous_" + period_column,
-            "current_" + segmentation,
-            "previous_" + segmentation)
-
-        logger.info("Successfully saved input data")
         # Push current period data onwards
         aws_functions.save_to_s3(bucket_name, out_file_name,
-                                 output_dataframe.to_json(orient="records"))
+                                 json_response["data"])
         logger.info("Successfully sent data to s3")
 
-        anomalies = anomalies.to_json(orient="records")
+        anomalies = json_response["anomalies"]
 
         if anomalies != "[]":
             aws_functions.save_to_s3(bucket_name, "Strata_Anomalies", anomalies)
             have_anomalies = True
         else:
             have_anomalies = False
+        logger.info("Successfully sent anomalies to s3")
 
         aws_functions.send_sns_message_with_anomalies(have_anomalies, sns_topic_arn,
                                                       "Strata.")
@@ -154,61 +143,3 @@ def lambda_handler(event, context):
 
     logger.info("Successfully completed module: " + current_module)
     return {"success": True}
-
-
-def strata_mismatch_detector(data, current_period, time, reference, segmentation,
-                             stored_segmentation, current_time, previous_time,
-                             current_segmentation, previous_segmentation):
-    """
-    Looks only at id and strata columns. Then drops any duplicated rows (keep=false means
-    that if there is a dupe it'll drop both). If there are any rows in this DataFrame it
-    shows that the reference-strata combination was unique, and therefore the strata is
-    different between periods.
-    :param data: The DataFrame the miss-match detection will be performed on.
-    :param current_period: The current period of the run.
-    :param time: Field name which is used as a gauge of time'. Added for IAC config.
-    :param reference: Field name which is used as a reference for IAC.
-    :param segmentation: Field name of the segmentation used for IAC.
-    :param stored_segmentation: Field name of stored segmentation for IAC.
-    :param current_time: Field name of the current time used for IAC.
-    :param previous_time: Field name of the previous time used for IAC.
-    :param current_segmentation: Field name of the current segmentation used for IAC.
-    :param previous_segmentation: Field name of the current segmentation used for IAC.
-    :return: Success & Error on Fail or Success, Impute and distinct_values Type: JSON
-    """
-    data_anomalies = data[[reference, segmentation, time]]
-
-    data_anomalies = data_anomalies.drop_duplicates(subset=[reference, segmentation],
-                                                    keep=False)
-
-    if data_anomalies.size > 0:
-        # Filter to only include data from the current period
-        fix_data = data_anomalies[data_anomalies[time] == int(current_period)][
-            [reference, segmentation]]
-        fix_data = fix_data.rename(columns={segmentation: stored_segmentation})
-
-        # Now merge these so that the fix_data strata is
-        # added as an extra column to the input data
-        data = pd.merge(data, fix_data, on=reference, how="left")
-
-        # We should now have a good Strata column in the dataframe - mostly containing
-        # null values, containing strata where there was anomoly using an apply method,
-        # set strata to be the goodstrata.
-        data[segmentation] = data.apply(
-            lambda x: x[stored_segmentation]
-            if str(x[stored_segmentation]) != "nan" else x[segmentation], axis=1)
-        data = data.drop(stored_segmentation, axis=1)
-
-        # Split on period then merge together so they're same row.
-        current_period_anomalies = data_anomalies[
-            data_anomalies[time] == int(current_period)].rename(
-            columns={segmentation: current_segmentation, time: current_time})
-
-        prev_period_anomalies = data_anomalies[data_anomalies[time]
-                                               != int(current_period)].rename(
-            columns={segmentation: previous_segmentation, time: previous_time})
-
-        data_anomalies = pd.merge(current_period_anomalies, prev_period_anomalies,
-                                  on=reference)
-
-    return data, data_anomalies
