@@ -25,9 +25,13 @@ wrangler_environment_variables = {
 
 method_runtime_variables = {
     "RuntimeVariables": {
+        "current_period": "201809",
         "data": None,
-        "region_column": "region",
+        "period_column": "period",
+        "segmentation": "strata",
         "survey_column": "survey",
+        "reference": "responder_id",
+        "region_column": "region",
         "run_id": "bob"
     }
 }
@@ -167,7 +171,7 @@ def test_calculate_strata():
     )
     produced_data = produced_data.sort_index(axis=1)
 
-    with open("tests/fixtures/test_method_prepared_output.json", "r") as file_2:
+    with open("tests/fixtures/test_calculate_strata_prepared_output.json", "r") as file_2:
         file_data = file_2.read()
     prepared_data = pd.DataFrame(json.loads(file_data)).sort_index(axis=1)
 
@@ -210,7 +214,7 @@ def test_strata_mismatch_detector():
         test_data_in = file_1.read()
     method_data = pd.DataFrame(json.loads(test_data_in))
 
-    produced_data, anomalies = lambda_wrangler_function.strata_mismatch_detector(
+    produced_data, anomalies = lambda_method_function.strata_mismatch_detector(
         method_data,
         "201809", "period",
         "responder_id", "strata",
