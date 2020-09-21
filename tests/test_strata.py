@@ -32,7 +32,8 @@ method_runtime_variables = {
         "survey_column": "survey",
         "reference": "responder_id",
         "region_column": "region",
-        "run_id": "bob"
+        "run_id": "bob",
+        "bpm_queue_url": "fake_queue_url",
     }
 }
 
@@ -45,7 +46,9 @@ wrangler_runtime_variables = {
             "out_file_name": "test_wrangler_output.json",
             "period": "201809",
             "sns_topic_arn": "fake_sns_arn",
-            "distinct_values": ["region"]
+            "distinct_values": ["region"],
+            "bpm_queue_url": "fake_queue_url",
+            "total_steps": "6"
         }
 }
 

@@ -112,7 +112,8 @@ def lambda_handler(event, context):
                 "survey_column": survey_column,
                 "reference": reference,
                 "region_column": region_column,
-                "run_id": run_id
+                "run_id": run_id,
+                "bpm_queue_url": bpm_queue_url
             }
         }
         returned_data = var_lambda.invoke(FunctionName=method_name,
