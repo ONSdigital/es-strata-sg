@@ -112,8 +112,8 @@ def test_incomplete_read_error():
         (lambda_wrangler_function, wrangler_environment_variables,
          "KeyError", test_generic_library.wrangler_assert)
     ])
-@mock.patch('strata_period_wrangler.aws_functions.send_bpm_status')
-def test_key_error(mock_send_status, which_lambda, which_environment_variables,
+
+def test_key_error(mock_send_bpm_status, which_lambda, which_environment_variables,
                    expected_message, assertion):
     test_generic_library.key_error(which_lambda, which_environment_variables,
                                    expected_message, assertion)
@@ -130,7 +130,7 @@ def test_method_error():
                                                "strata_period_wrangler")
 
 
-@mock.patch('strata_period_wrangler.aws_functions.send_bpm_status')
+
 @pytest.mark.parametrize(
     "which_lambda,expected_message,assertion,which_environment_variables",
     [(lambda_method_function,
