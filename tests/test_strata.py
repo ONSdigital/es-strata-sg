@@ -104,6 +104,7 @@ def test_incomplete_read_error():
                                                "IncompleteReadError")
 
 
+@mock.patch('enrichment_wrangler.aws_functions.send_bpm_status')
 @pytest.mark.parametrize(
     "which_lambda,which_environment_variables,expected_message,assertion",
     [
@@ -129,6 +130,7 @@ def test_method_error():
                                                "strata_period_wrangler")
 
 
+@mock.patch('enrichment_wrangler.aws_functions.send_bpm_status')
 @pytest.mark.parametrize(
     "which_lambda,expected_message,assertion,which_environment_variables",
     [(lambda_method_function,
