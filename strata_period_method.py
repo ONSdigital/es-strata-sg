@@ -46,8 +46,10 @@ def lambda_handler(event, context):
     current_module = "Strata - Method"
     error_message = ""
     logger = general_functions.get_logger()
+    bpm_queue_url = None
     # Define run_id outside of try block
     run_id = 0
+
     try:
 
         logger.info("Strata Method Begun")
