@@ -65,7 +65,8 @@ wrangler_runtime_variables = {
          wrangler_environment_variables, None,
          "ClientError", test_generic_library.wrangler_assert)
     ])
-def test_client_error(which_lambda, which_runtime_variables,
+@mock.patch('strata_period_wrangler.aws_functions.send_bpm_status')
+def test_client_error(mock_bpm_status, which_lambda, which_runtime_variables,
                       which_environment_variables, which_data,
                       expected_message, assertion):
     test_generic_library.client_error(which_lambda, which_runtime_variables,
