@@ -33,6 +33,7 @@ class RuntimeSchema(Schema):
     region_column = fields.Str(required=True)
     segmentation = fields.Str(required=True)
     survey_column = fields.Str(required=True)
+    bpm_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -65,6 +66,7 @@ def lambda_handler(event, context):
         value_column = environment_variables["value_column"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         data = runtime_variables["data"]
         current_period = runtime_variables["current_period"]
         period_column = runtime_variables["period_column"]
@@ -89,8 +91,10 @@ def lambda_handler(event, context):
         # Perform mismatch detection
         strata_check, anomalies = strata_mismatch_detector(
             post_strata,
-            current_period, period_column,
-            reference, segmentation,
+            current_period,
+            period_column,
+            reference,
+            segmentation,
             "good_" + segmentation,
             "current_" + period_column,
             "previous_" + period_column,
@@ -103,8 +107,11 @@ def lambda_handler(event, context):
         final_output = {"data": json_out, "anomalies": anomalies_out}
 
     except Exception as e:
-        error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+        error_message = general_functions.handle_exception(e,
+                                                           current_module,
+                                                           run_id,
+                                                           context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(error_message)
