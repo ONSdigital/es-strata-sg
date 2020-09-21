@@ -113,7 +113,7 @@ def test_incomplete_read_error():
          "KeyError", test_generic_library.wrangler_assert)
     ])
 
-def test_key_error(mock_send_bpm_status, which_lambda, which_environment_variables,
+def test_key_error(which_lambda, which_environment_variables,
                    expected_message, assertion):
     test_generic_library.key_error(which_lambda, which_environment_variables,
                                    expected_message, assertion)
