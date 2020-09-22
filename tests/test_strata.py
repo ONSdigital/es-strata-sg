@@ -113,7 +113,6 @@ def test_incomplete_read_error():
         (lambda_wrangler_function, wrangler_environment_variables,
          "KeyError", test_generic_library.wrangler_assert)
     ])
-
 def test_key_error(which_lambda, which_environment_variables,
                    expected_message, assertion):
     test_generic_library.key_error(which_lambda, which_environment_variables,
@@ -129,7 +128,6 @@ def test_method_error():
                                                wrangler_environment_variables,
                                                file_list,
                                                "strata_period_wrangler")
-
 
 
 @pytest.mark.parametrize(
