@@ -36,6 +36,8 @@ class RuntimeSchema(Schema):
     distinct_values = fields.List(fields.String, required=True)
     sns_topic_arn = fields.Str(required=True)
     survey_column = fields.Str(required=True)
+    bpm_queue_url = fields.Str(required=True)
+    total_steps = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -53,6 +55,9 @@ def lambda_handler(event, context):
     error_message = ""
     log_message = ""
     logger = general_functions.get_logger()
+
+    bpm_queue_url = None
+    current_step_num = "3"
 
     # Define run_id outside of try block
     run_id = 0
@@ -78,14 +83,21 @@ def lambda_handler(event, context):
         reference = environment_variables["reference"]
 
         # Runtime Variables
+        bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_period = runtime_variables["period"]
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         region_column = runtime_variables["distinct_values"][0]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
         survey_column = runtime_variables["survey_column"]
+        total_steps = runtime_variables["total_steps"]
 
         logger.info("Retrieved configuration variables.")
+
+        # Send start of module status to BPM.
+        status = "IN PROGRESS"
+        aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
+                                      current_step_num, total_steps)
 
         data_df = aws_functions.read_dataframe_from_s3(bucket_name, in_file_name)
         logger.info("Successfully retrieved data from s3")
@@ -100,7 +112,8 @@ def lambda_handler(event, context):
                 "survey_column": survey_column,
                 "reference": reference,
                 "region_column": region_column,
-                "run_id": run_id
+                "run_id": run_id,
+                "bpm_queue_url": bpm_queue_url
             }
         }
         returned_data = var_lambda.invoke(FunctionName=method_name,
@@ -132,12 +145,20 @@ def lambda_handler(event, context):
         logger.info("Successfully sent message to sns")
 
     except Exception as e:
-        error_message = general_functions.handle_exception(e, current_module,
-                                                           run_id, context)
+        error_message = general_functions.handle_exception(e,
+                                                           current_module,
+                                                           run_id,
+                                                           context=context,
+                                                           bpm_queue_url=bpm_queue_url)
     finally:
         if (len(error_message)) > 0:
             logger.error(log_message)
             raise exception_classes.LambdaFailure(error_message)
 
     logger.info("Successfully completed module: " + current_module)
+
+    # Send end of module status to BPM.
+    status = "DONE"
+    aws_functions.send_bpm_status(bpm_queue_url, current_module, status, run_id,
+                                  current_step_num, total_steps)
     return {"success": True}

@@ -1,4 +1,5 @@
 {
+    "bpm_queue_url": "fake_queue_url",
     "current_period": "201809",
     "data": null,
     "period_column": "period",
