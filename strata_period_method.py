@@ -27,11 +27,13 @@ class RuntimeSchema(Schema):
         raise ValueError(f"Error validating runtime params: {e}")
 
     data = fields.Str(required=True)
+    environment = fields.Str(required=True)
     current_period = fields.Str(required=True)
     period_column = fields.Str(required=True)
     reference = fields.Str(required=True)
     region_column = fields.Str(required=True)
     segmentation = fields.Str(required=True)
+    survey = fields.Str(required=True)
     survey_column = fields.Str(required=True)
     bpm_queue_url = fields.Str(required=True)
 
@@ -45,14 +47,11 @@ def lambda_handler(event, context):
     """
     current_module = "Strata - Method"
     error_message = ""
-    logger = general_functions.get_logger()
     bpm_queue_url = None
     # Define run_id outside of try block
     run_id = 0
 
     try:
-
-        logger.info("Strata Method Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
@@ -61,8 +60,6 @@ def lambda_handler(event, context):
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
 
-        logger.info("Validated parameters.")
-
         # Environment Variables
         strata_column = environment_variables["strata_column"]
         value_column = environment_variables["value_column"]
@@ -70,15 +67,30 @@ def lambda_handler(event, context):
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         data = runtime_variables["data"]
+        environment = runtime_variables['environment']
         current_period = runtime_variables["current_period"]
         period_column = runtime_variables["period_column"]
         reference = runtime_variables["reference"]
         region_column = runtime_variables["region_column"]
         segmentation = runtime_variables["segmentation"]
+        survey = runtime_variables['survey']
         survey_column = runtime_variables["survey_column"]
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        return {"success": False, "error": error_message}
 
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+        return {"success": False, "error": error_message}
+
+    try:
+        logger.info("Started - retrieved configuration variables.")
         input_data = pd.read_json(data, dtype=False)
         post_strata = input_data.apply(
             calculate_strata,

@@ -27,8 +27,10 @@ method_runtime_variables = {
     "RuntimeVariables": {
         "current_period": "201809",
         "data": None,
+        "environment": "sandbox",
         "period_column": "period",
         "segmentation": "strata",
+        "survey": "BMI_SG",
         "survey_column": "survey",
         "reference": "responder_id",
         "region_column": "region",
@@ -40,6 +42,7 @@ method_runtime_variables = {
 wrangler_runtime_variables = {
     "RuntimeVariables":
         {
+            "survey": "BMI_SG",
             "survey_column": "survey",
             "run_id": "bob",
             "in_file_name": "test_wrangler_input",
@@ -48,6 +51,7 @@ wrangler_runtime_variables = {
             "sns_topic_arn": "fake_sns_arn",
             "distinct_values": ["region"],
             "bpm_queue_url": "fake_queue_url",
+            "environment": "sandbox",
             "total_steps": "6"
         }
 }

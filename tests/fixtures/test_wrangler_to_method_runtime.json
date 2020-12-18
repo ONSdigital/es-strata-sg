@@ -2,10 +2,12 @@
     "bpm_queue_url": "fake_queue_url",
     "current_period": "201809",
     "data": null,
+    "environment": "sandbox",
     "period_column": "period",
     "reference": "responder_id",
     "region_column": "region",
     "run_id": "bob",
     "segmentation": "strata",
+    "survey": "BMI_SG",
     "survey_column": "survey"
 }
