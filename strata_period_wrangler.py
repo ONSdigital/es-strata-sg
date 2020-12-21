@@ -30,13 +30,15 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
-    period = fields.Str(required=True)
+    bpm_queue_url = fields.Str(required=True)
+    distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(Required=True)
     in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    distinct_values = fields.List(fields.String, required=True)
+    period = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
+    survey = fields.Str(required=True)
     survey_column = fields.Str(required=True)
-    bpm_queue_url = fields.Str(required=True)
     total_steps = fields.Str(required=True)
 
 
@@ -54,15 +56,12 @@ def lambda_handler(event, context):
     current_module = "Strata - Wrangler"
     error_message = ""
     log_message = ""
-    logger = general_functions.get_logger()
-
     bpm_queue_url = None
     current_step_num = "3"
 
     # Define run_id outside of try block
     run_id = 0
     try:
-        logger.info("Strata Wrangler Begun")
         # Retrieve run_id before input validation
         # Because it is used in exception handling
         run_id = event["RuntimeVariables"]["run_id"]
@@ -72,8 +71,6 @@ def lambda_handler(event, context):
         environment_variables = EnvironmentSchema().load(os.environ)
 
         runtime_variables = RuntimeSchema().load(event["RuntimeVariables"])
-
-        logger.info("Validated parameters.")
 
         # Environment Variables
         bucket_name = environment_variables["bucket_name"]
@@ -85,14 +82,32 @@ def lambda_handler(event, context):
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_period = runtime_variables["period"]
+        environment = runtime_variables['environment']
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         region_column = runtime_variables["distinct_values"][0]
         sns_topic_arn = runtime_variables["sns_topic_arn"]
+        survey = runtime_variables["survey"]
         survey_column = runtime_variables["survey_column"]
         total_steps = runtime_variables["total_steps"]
 
-        logger.info("Retrieved configuration variables.")
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module, run_id,
+                                                           context=context)
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+        logger = general_functions.get_logger(survey, current_module, environment,
+                                              run_id)
+    except Exception as e:
+        error_message = general_functions.handle_exception(e, current_module,
+                                                           run_id, context=context)
+
+        raise exception_classes.LambdaFailure(error_message)
+
+    try:
+
+        logger.info("Started - retrieved configuration variables.")
 
         # Send start of module status to BPM.
         status = "IN PROGRESS"
@@ -105,15 +120,17 @@ def lambda_handler(event, context):
         data_json = data_df.to_json(orient="records")
         json_payload = {
             "RuntimeVariables": {
-                "data": data_json,
+                "bpm_queue_url": bpm_queue_url,
                 "current_period": current_period,
+                "data": data_json,
+                "environment": environment,
                 "period_column": period_column,
-                "segmentation": segmentation,
-                "survey_column": survey_column,
                 "reference": reference,
                 "region_column": region_column,
                 "run_id": run_id,
-                "bpm_queue_url": bpm_queue_url
+                "segmentation": segmentation,
+                "survey": survey,
+                "survey_column": survey_column
             }
         }
         returned_data = var_lambda.invoke(FunctionName=method_name,

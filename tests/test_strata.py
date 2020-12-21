@@ -16,38 +16,42 @@ method_environment_variables = {
 }
 
 wrangler_environment_variables = {
-    "period_column": "period",
-    "segmentation": "strata",
-    "reference": "responder_id",
     "bucket_name": "test_bucket",
-    "method_name": "strata_period_method"
+    "method_name": "strata_period_method",
+    "period_column": "period",
+    "reference": "responder_id",
+    "segmentation": "strata"
 }
 
 method_runtime_variables = {
     "RuntimeVariables": {
+        "bpm_queue_url": "fake_queue_url",
         "current_period": "201809",
         "data": None,
+        "environment": "sandbox",
         "period_column": "period",
-        "segmentation": "strata",
-        "survey_column": "survey",
         "reference": "responder_id",
         "region_column": "region",
         "run_id": "bob",
-        "bpm_queue_url": "fake_queue_url",
+        "segmentation": "strata",
+        "survey": "BMI_SG",
+        "survey_column": "survey"
     }
 }
 
 wrangler_runtime_variables = {
     "RuntimeVariables":
         {
-            "survey_column": "survey",
-            "run_id": "bob",
+            "bpm_queue_url": "fake_queue_url",
+            "distinct_values": ["region"],
+            "environment": "sandbox",
             "in_file_name": "test_wrangler_input",
             "out_file_name": "test_wrangler_output.json",
             "period": "201809",
+            "run_id": "bob",
             "sns_topic_arn": "fake_sns_arn",
-            "distinct_values": ["region"],
-            "bpm_queue_url": "fake_queue_url",
+            "survey": "BMI_SG",
+            "survey_column": "survey",
             "total_steps": "6"
         }
 }
