@@ -49,9 +49,9 @@ wrangler_runtime_variables = {
             "out_file_name": "test_wrangler_output.json",
             "period": "201809",
             "run_id": "bob",
+            "sns_topic_arn": "fake_sns_arn",
             "survey": "BMI_SG",
             "survey_column": "survey",
-            "sns_topic_arn": "fake_sns_arn",
             "total_steps": "6"
         }
 }
