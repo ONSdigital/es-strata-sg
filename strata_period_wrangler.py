@@ -30,16 +30,16 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
-    period = fields.Str(required=True)
+    bpm_queue_url = fields.Str(required=True)
+    distinct_values = fields.List(fields.String, required=True)
+    environment = fields.Str(Required=True)
     in_file_name = fields.Str(required=True)
     out_file_name = fields.Str(required=True)
-    distinct_values = fields.List(fields.String, required=True)
+    period = fields.Str(required=True)
     sns_topic_arn = fields.Str(required=True)
     survey_column = fields.Str(required=True)
     survey = fields.Str(required=True)
-    bpm_queue_url = fields.Str(required=True)
     total_steps = fields.Str(required=True)
-    environment = fields.Str(Required=True)
 
 
 def lambda_handler(event, context):
@@ -82,6 +82,7 @@ def lambda_handler(event, context):
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
         current_period = runtime_variables["period"]
+        environment = runtime_variables['environment']
         in_file_name = runtime_variables["in_file_name"]
         out_file_name = runtime_variables["out_file_name"]
         region_column = runtime_variables["distinct_values"][0]
@@ -89,7 +90,7 @@ def lambda_handler(event, context):
         survey = runtime_variables["survey"]
         survey_column = runtime_variables["survey_column"]
         total_steps = runtime_variables["total_steps"]
-        environment = runtime_variables['environment']
+
     except Exception as e:
         error_message = general_functions.handle_exception(e, current_module, run_id,
                                                            context=context)
@@ -119,17 +120,17 @@ def lambda_handler(event, context):
         data_json = data_df.to_json(orient="records")
         json_payload = {
             "RuntimeVariables": {
-                "data": data_json,
+                "bpm_queue_url": bpm_queue_url,
                 "current_period": current_period,
+                "data": data_json,
+                "environment": environment,
                 "period_column": period_column,
-                "segmentation": segmentation,
-                "survey": survey,
-                "survey_column": survey_column,
                 "reference": reference,
                 "region_column": region_column,
                 "run_id": run_id,
-                "bpm_queue_url": bpm_queue_url,
-                "environment": environment
+                "segmentation": segmentation,
+                "survey": survey,
+                "survey_column": survey_column
             }
         }
         returned_data = var_lambda.invoke(FunctionName=method_name,

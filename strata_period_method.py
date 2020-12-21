@@ -26,16 +26,16 @@ class RuntimeSchema(Schema):
         logging.error(f"Error validating runtime params: {e}")
         raise ValueError(f"Error validating runtime params: {e}")
 
+    bpm_queue_url = fields.Str(required=True)
+    current_period = fields.Str(required=True)
     data = fields.Str(required=True)
     environment = fields.Str(required=True)
-    current_period = fields.Str(required=True)
     period_column = fields.Str(required=True)
     reference = fields.Str(required=True)
     region_column = fields.Str(required=True)
     segmentation = fields.Str(required=True)
     survey = fields.Str(required=True)
     survey_column = fields.Str(required=True)
-    bpm_queue_url = fields.Str(required=True)
 
 
 def lambda_handler(event, context):
@@ -66,9 +66,9 @@ def lambda_handler(event, context):
 
         # Runtime Variables
         bpm_queue_url = runtime_variables["bpm_queue_url"]
+        current_period = runtime_variables["current_period"]
         data = runtime_variables["data"]
         environment = runtime_variables['environment']
-        current_period = runtime_variables["current_period"]
         period_column = runtime_variables["period_column"]
         reference = runtime_variables["reference"]
         region_column = runtime_variables["region_column"]
