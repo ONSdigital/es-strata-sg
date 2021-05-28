@@ -5,12 +5,6 @@ provider:
   deploymentBucket:
     name: spp-results-${self:custom.environment}-serverless
   role: arn:aws:iam::#{AWS::AccountId}:role/lambda_invoke_lambda
-  vpc:
-    securityGroupIds:
-      - ${file(../json_outputs/security_groups_output.json):SecurityGroups.0.GroupId}
-    subnetIds:
-      - ${file(../json_outputs/subnets_output.json):Subnets.0.SubnetId}
-      - ${file(../json_outputs/subnets_output.json):Subnets.1.SubnetId}
   runtime: python3.7
   region: eu-west-2
   package:
