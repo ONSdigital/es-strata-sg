@@ -7,7 +7,7 @@ attrs==19.1.0
 aws-sam-translator==1.24.0
 aws-xray-sdk==2.4.2
 awscli==1.18.71
-babel==2.7.0
+babel==2.9.1
 backcall==0.1.0
 bandit==1.6.1
 black==19.3b0
